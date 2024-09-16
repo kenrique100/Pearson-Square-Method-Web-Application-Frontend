@@ -1,10 +1,10 @@
-import React, { useState } from 'react'; 
-import { Form, Button, Spinner } from 'react-bootstrap'; 
-import { toast, ToastContainer } from 'react-toastify'; 
-import 'react-toastify/dist/ReactToastify.css'; 
-import api from '../services/api'; 
+import React, { useState } from 'react';
+import { Form, Button, Spinner } from 'react-bootstrap';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { createFeedFormulation } from '../services/feedFormulationsService'; // Adjust import based on your service
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
 
 // Component for creating a new feed formulation
 const FormulationCreate = () => {
@@ -53,17 +53,17 @@ const FormulationCreate = () => {
     }
     setLoading(true); // Set loading state to true while the request is being made
     try {
-      // Send POST request to API to create new formulation
-      const response = await api.post('/feed-formulation', formData);
+      console.log('Submitting data:', formData); // Log formData
+      const response = await createFeedFormulation(formData);
+      console.log('API Response:', response); // Log API response
       toast.success('Formulation created successfully!'); // Show success toast notification
-      setLoading(false); // Set loading state to false after request is complete
-      navigate(`/formulations/${response.data.formulationId}`); // Navigate to the newly created formulation's page
+      navigate(`/formulations/${response.formulationId}`); // Navigate to the newly created formulation's page
     } catch (error) {
       console.error('Error creating formulation:', error); // Log error to console
-      // Display detailed error message using toast
-      const errorMessage = error.response?.data?.message || 'Failed to create formulation.';
+      const errorMessage = error.message || 'Failed to create formulation.'; // Handle error message
       toast.error(errorMessage); // Show error toast notification
-      setLoading(false); // Set loading state to false
+    } finally {
+      setLoading(false); // Set loading state to false after request is complete
     }
   };
 

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Table, Spinner, Button, Card } from 'react-bootstrap';
-import api from '../services/api';
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx'; // Import XLSX for Excel export
+import { getAllFeedFormulations } from '../services/feedFormulationsService'; // Update import
 
 // Component to view the details of a specific formulation
 const FormulationView = () => {
@@ -14,8 +14,8 @@ const FormulationView = () => {
   // Function to fetch the formulation details from the API
   const fetchFormulation = async () => {
     try {
-      const response = await api.get('/feed-formulation'); // Fetch all formulations from the API
-      const found = response.data.find(f => f.formulationId === id); // Find the formulation with the matching ID
+      const response = await getAllFeedFormulations(); // Fetch all formulations from the API
+      const found = response.find(f => f.formulationId === id); // Find the formulation with the matching ID
       if (found) {
         setFormulation(found); // Set the found formulation in state
       }
