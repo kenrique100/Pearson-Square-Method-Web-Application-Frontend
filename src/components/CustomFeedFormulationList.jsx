@@ -30,12 +30,6 @@ const CustomFeedFormulationList = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    // Check if the date is valid
-    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -60,7 +54,7 @@ const CustomFeedFormulationList = () => {
             <tr key={formulation.formulationId}>
               <td>{index + 1}</td>
               <td>{formulation.formulationName}</td>
-              <td>{formatDate(formulation.dateCreated)}</td>
+              <td>{new Date(formulation.date).toLocaleDateString()}</td>
               <td>{formulation.totalQuantityKg}</td>
               <td>{formulation.targetCpValue}%</td>
               <td>
