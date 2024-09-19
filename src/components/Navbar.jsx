@@ -1,30 +1,34 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Navbar, Nav, Container } from 'react-bootstrap';
+import { LinkContainer } from 'react-router-bootstrap';
 
-const Navbar = () => {
+const NavbarComponent = () => {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container-fluid">
-        <Link className="navbar-brand" to="/">Feed Formulation</Link>
-        <div className="collapse navbar-collapse">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link" to="/">Formulation List</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/formulation/create">Create Formulation</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/custom/formulation/list">Custom Formulation List</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/custom/formulation/create">Create Custom Formulation</Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <Navbar bg="dark" variant="dark" expand="lg">
+      <Container>
+        <LinkContainer to="/">
+          <Navbar.Brand>Feed Formulation</Navbar.Brand>
+        </LinkContainer>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <LinkContainer to="/">
+              <Nav.Link>Formulation List</Nav.Link>
+            </LinkContainer>
+            <LinkContainer to="/formulation/create">
+              <Nav.Link>Create Formulation</Nav.Link>
+            </LinkContainer>
+            <LinkContainer to="/custom/formulation/list">
+              <Nav.Link>Custom Formulation List</Nav.Link>
+            </LinkContainer>
+            <LinkContainer to="/custom/formulation/create">
+              <Nav.Link>Create Custom Formulation</Nav.Link>
+            </LinkContainer>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 };
 
-export default Navbar;
+export default NavbarComponent;
