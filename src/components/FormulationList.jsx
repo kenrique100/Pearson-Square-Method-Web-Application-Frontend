@@ -1,67 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Spinner, Modal, Dropdown } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, Dropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getAllFeedFormulations, deleteFeedFormulationByIdAndDate } from '../services/feedFormulationsService';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import api from '../services/api'; // Import the API service
+import { toast } from 'react-toastify'; // Import toast for notifications
+import 'react-toastify/dist/ReactToastify.css'; // Import the toast CSS file
 
 const FormulationList = () => {
-  const [formulations, setFormulations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteDate, setDeleteDate] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [formulations, setFormulations] = useState([]); // State to store the list of formulations
+  const [deleteId, setDeleteId] = useState(null); // State to store the ID of the formulation to be deleted
+  const [deleteDate, setDeleteDate] = useState(null); // State to store the date of the formulation to be deleted
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // State to control the visibility of the delete confirmation modal
 
-  // Fetch all formulations
-  const fetchFormulations = async () => {
-    try {
-      const response = await getAllFeedFormulations();
-      setFormulations(response);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching formulations:', error);
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchFormulations();
   }, []);
 
-  // Handle delete
-  const handleDelete = async () => {
+  // Use the API service to fetch formulations
+  const fetchFormulations = async () => {
     try {
-      await deleteFeedFormulationByIdAndDate(deleteId, deleteDate);
-      toast.success('Formulation deleted successfully!');
-      fetchFormulations();
-      setShowDeleteModal(false);
+      const response = await api.getFormulations();
+      setFormulations(response.data);
     } catch (error) {
-      console.error('Error deleting formulation:', error);
-      toast.error('Error deleting formulation');
-      setShowDeleteModal(false);
+      console.error('Error fetching formulations:', error);
     }
   };
 
-  if (loading) {
-    return <Spinner animation="border" />;
-  }
+  // Function to handle the deletion of a formulation
+  const handleDelete = async () => {
+    console.log('Deleting formulation with ID:', deleteId, 'and Date:', deleteDate); // Log the ID and date of the formulation to be deleted
+    try {
+      await api.delete(`/feed-formulation/${deleteId}/${deleteDate}`); // API call to delete the formulation
+      toast.success('Formulation deleted successfully!'); // Show a success toast notification
+      fetchFormulations(); // Refresh the list of formulations after deletion
+      setShowDeleteModal(false); // Close the delete confirmation modal
+    } catch (error) {
+      console.error('Error deleting formulation:', error); // Log errors to the console during deletion
+      toast.error('Error deleting formulation'); // Show an error toast notification
+      setShowDeleteModal(false); // Close the delete confirmation modal even if there's an error
+    }
+  };
+
+
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      exit={{ opacity: 0 }}
+      className="container mt-4"
     >
-      <h2>Formulations List</h2>
-      <Table striped bordered hover>
+      <h2>Feed Formulations</h2>
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Formulation Name</th>
-            <th>Creation Date</th>
-            <th>Quantity (kg)</th>
-            <th>Target CP Value</th>
+            <th>#</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Total Quantity (kg)</th>
+            <th>Target CP (%)</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -69,46 +67,47 @@ const FormulationList = () => {
           {formulations.map(f => (
             <tr key={f.formulationId}>
               <td>{f.formulationId}</td>
-              <td>{f.formulationName}</td>
-              <td>{new Date(f.date).toLocaleDateString()}</td>
+              <td>{f.formulationName}</td> {/* Display the formulation name */}
+              <td>{new Date(f.date).toLocaleDateString()}</td> {/* Display the creation date */}
               <td>{f.quantity}</td>
               <td>{f.targetCpValue}</td>
               <td>
                 <div className="d-none d-md-inline">
-                  <Link to={`/formulations/${f.formulationId}`}>
-                    <Button variant="primary" className="me-2">View</Button>
+                  <Link to={`/feed- formulation/${f.formulationId}`}>
+                    <Button variant="primary" className="me-2">View</Button> {/* Button to view the formulation */}
                   </Link>
-                  <Link to={`/formulations/${f.formulationId}/edit`}>
-                    <Button variant="warning" className="me-2">Edit</Button>
+                  <Link to={`/feed-formulation/${f.formulationId}/edit`}>
+                    <Button variant="warning" className="me-2">Edit</Button> {/* Button to edit the formulation */}
                   </Link>
                   <Button
                     variant="danger"
                     onClick={() => {
-                      setDeleteId(f.formulationId);
-                      setDeleteDate(f.date);
-                      setShowDeleteModal(true);
+                      setDeleteId(f.formulationId); // Set the formulation ID for deletion
+                      setDeleteDate(f.date); // Set the formulation date for deletion
+                      setShowDeleteModal(true); // Show the delete confirmation modal
                     }}
                   >
                     Delete
-                  </Button>
+                  </Button> {/* Button to delete the formulation */}
                 </div>
                 <div className="d-md-none">
                   <Dropdown>
                     <Dropdown.Toggle variant="secondary" id="dropdown-basic">
                       Actions
                     </Dropdown.Toggle>
+
                     <Dropdown.Menu>
-                      <Dropdown.Item as={Link} to={`/formulations/${f.formulationId}`}>
+                      <Dropdown.Item as={Link} to={`/formulation/view/${f.formulationId}`}>
                         View
                       </Dropdown.Item>
-                      <Dropdown.Item as={Link} to={`/formulations/${f.formulationId}/edit`}>
+                      <Dropdown.Item as={Link} to={`/formulation/edit/${f.formulationId}`}>
                         Edit
                       </Dropdown.Item>
                       <Dropdown.Item
                         onClick={() => {
-                          setDeleteId(f.formulationId);
-                          setDeleteDate(f.date);
-                          setShowDeleteModal(true);
+                          setDeleteId(f.formulationId); // Set the formulation ID for deletion
+                          setDeleteDate(f.date); // Set the formulation date for deletion
+                          setShowDeleteModal(true); // Show the delete confirmation modal
                         }}
                       >
                         Delete
@@ -122,18 +121,19 @@ const FormulationList = () => {
         </tbody>
       </Table>
 
+      {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Confirm Delete</Modal.Title>
+          <Modal.Title>Confirm Delete</Modal.Title> {/* Modal title */}
         </Modal.Header>
-        <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body>
+        <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body> {/* Modal body */}
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
             Cancel
-          </Button>
+          </Button> {/* Button to cancel the deletion */}
           <Button variant="danger" onClick={handleDelete}>
             Delete
-          </Button>
+          </Button> {/* Button to confirm the deletion */}
         </Modal.Footer>
       </Modal>
     </motion.div>

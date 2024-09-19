@@ -1,29 +1,30 @@
-
 import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
-import { LinkContainer } from 'react-router-bootstrap';
+import { Link } from 'react-router-dom';
 
-const NavbarComponent = () => {
+const Navbar = () => {
   return (
-    <Navbar bg="dark" variant="dark" expand="lg">
-      <Container>
-        <LinkContainer to="/formulations">
-          <Navbar.Brand>Feed Formulation</Navbar.Brand>
-        </LinkContainer>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <LinkContainer to="/formulations">
-              <Nav.Link>Home</Nav.Link>
-            </LinkContainer>
-            <LinkContainer to="/formulations/create">
-              <Nav.Link>Create Formulation</Nav.Link>
-            </LinkContainer>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div className="container-fluid">
+        <Link className="navbar-brand" to="/">Feed Formulation</Link>
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            <li className="nav-item">
+              <Link className="nav-link" to="/">Formulation List</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/formulation/create">Create Formulation</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/custom/formulation/list">Custom Formulation List</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/custom/formulation/create">Create Custom Formulation</Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
   );
 };
 
-export default NavbarComponent;
+export default Navbar;

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Table, Spinner, Button, Card } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx'; // Import XLSX for Excel export
-import { getAllFeedFormulations } from '../services/feedFormulationsService'; // Update import
+import api from '../services/api'; // Ensure proper API import
 
 // Component to view the details of a specific formulation
 const FormulationView = () => {
@@ -14,11 +14,8 @@ const FormulationView = () => {
   // Function to fetch the formulation details from the API
   const fetchFormulation = async () => {
     try {
-      const response = await getAllFeedFormulations(); // Fetch all formulations from the API
-      const found = response.find(f => f.formulationId === id); // Find the formulation with the matching ID
-      if (found) {
-        setFormulation(found); // Set the found formulation in state
-      }
+      const response = await api.getFeedFormulationByIdAndDate(id); // Fetch formulation by ID and date
+      setFormulation(response); // Set the formulation in state
       setLoading(false); // Set loading state to false after fetching
     } catch (error) {
       console.error('Error fetching formulation:', error); // Log error to console

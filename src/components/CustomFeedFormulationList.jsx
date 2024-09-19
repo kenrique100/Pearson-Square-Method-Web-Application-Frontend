@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Table, Button } from 'react-bootstrap';
+import api from '../services/api'; // Import the API service
 
 const CustomFeedFormulationList = () => {
   const [formulations, setFormulations] = useState([]);
@@ -11,9 +11,10 @@ const CustomFeedFormulationList = () => {
     fetchFormulations();
   }, []);
 
+  // Use the API service to fetch formulations
   const fetchFormulations = async () => {
     try {
-      const response = await axios.get('/api/feed-formulations');
+      const response = await api.getCustomFormulations();
       setFormulations(response.data);
     } catch (error) {
       console.error('Error fetching formulations:', error);
@@ -22,11 +23,17 @@ const CustomFeedFormulationList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/feed-formulations/${id}`);
+      await api.deleteCustomFeedFormulationByIdAndDate(id); // Adjusted API call to match service
       fetchFormulations(); // Refresh after delete
     } catch (error) {
       console.error('Error deleting formulation:', error);
     }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    // Check if the date is valid
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
   };
 
   return (
@@ -53,14 +60,14 @@ const CustomFeedFormulationList = () => {
             <tr key={formulation.formulationId}>
               <td>{index + 1}</td>
               <td>{formulation.formulationName}</td>
-              <td>{new Date(formulation.date).toLocaleDateString()}</td>
+              <td>{formatDate(formulation.dateCreated)}</td>
               <td>{formulation.totalQuantityKg}</td>
-              <td>{formulation.targetCp}%</td>
+              <td>{formulation.targetCpValue}%</td>
               <td>
-                <Link to={`/custom-feed-formulations/${formulation.formulationId}`} className="btn btn-primary btn-sm me-2">
+                <Link to={`/custom/formulation/view/${formulation.formulationId}`} className="btn btn-primary btn-sm me-2">
                   View
                 </Link>
-                <Link to={`/custom-feed-formulations/${formulation.formulationId}/edit`} className="btn btn-warning btn-sm me-2">
+                <Link to={`/custom/formulation/edit/${formulation.formulationId}`} className="btn btn-warning btn-sm me-2">
                   Edit
                 </Link>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(formulation.formulationId)}>
@@ -71,7 +78,6 @@ const CustomFeedFormulationList = () => {
           ))}
         </tbody>
       </Table>
-      <Link to="/custom-feed-formulations/create" className="btn btn-success mt-3">Create New Formulation</Link>
     </motion.div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -12,13 +12,7 @@ const CustomFeedFormulationEdit = () => {
   const [proteins, setProteins] = useState([{ name: '', quantityKg: '' }]);
   const [carbohydrates, setCarbohydrates] = useState([{ name: '', quantityKg: '' }]);
 
-  useEffect(() => {
-    if (id) {
-      fetchFormulation();
-    }
-  }, [id]);
-
-  const fetchFormulation = async () => {
+  const fetchFormulation = useCallback(async () => {
     try {
       const response = await axios.get(`/api/feed-formulations/${id}`);
       setFormulationName(response.data.formulationName);
@@ -27,28 +21,39 @@ const CustomFeedFormulationEdit = () => {
     } catch (error) {
       console.error('Error fetching formulation:', error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchFormulation();
+    }
+  }, [id, fetchFormulation]);
 
   const handleAddIngredient = (setIngredients) => {
     setIngredients((prev) => [...prev, { name: '', quantityKg: '' }]);
   };
 
   const handleInputChange = (setIngredients, index, field, value) => {
-    const newIngredients = [...setIngredients];
-    newIngredients[index][field] = value;
-    setIngredients(newIngredients);
+    setIngredients((prevIngredients) => {
+      const newIngredients = [...prevIngredients];
+      newIngredients[index] = { ...newIngredients[index], [field]: value };
+      return newIngredients;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newFormulation = {
       formulationName,
-      ingredients: [...proteins, ...carbohydrates],
+      ingredients: [
+        ...proteins.map((p) => ({ ...p, category: 'Proteins' })),
+        ...carbohydrates.map((c) => ({ ...c, category: 'Carbohydrates' })),
+      ],
     };
     try {
       await axios.put(`/api/feed-formulations/${id}`, newFormulation);
       alert('Formulation updated successfully');
-      navigate('/custom-feed-formulations');
+      navigate('/feed-formulations');
     } catch (error) {
       console.error('Error updating formulation:', error);
     }

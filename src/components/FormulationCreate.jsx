@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button, Spinner } from 'react-bootstrap';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { createFeedFormulation } from '../services/feedFormulationsService'; // Adjust import based on your service
+import api from '../services/api'; // Adjust import based on your service
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -53,9 +53,7 @@ const FormulationCreate = () => {
     }
     setLoading(true); // Set loading state to true while the request is being made
     try {
-      console.log('Submitting data:', formData); // Log formData
-      const response = await createFeedFormulation(formData);
-      console.log('API Response:', response); // Log API response
+      const response = await api.createFeedFormulation(formData, true); // Call custom API
       toast.success('Formulation created successfully!'); // Show success toast notification
       navigate(`/formulations/${response.formulationId}`); // Navigate to the newly created formulation's page
     } catch (error) {
@@ -129,4 +127,4 @@ const FormulationCreate = () => {
   );
 };
 
-export default FormulationCreate; // Export component as default
+export default FormulationCreate;
