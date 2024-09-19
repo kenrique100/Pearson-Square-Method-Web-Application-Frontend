@@ -1,139 +1,135 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Table, Spinner, Button, Card } from 'react-bootstrap';
-import api from '../services/api';  // Assuming apiService.js has the API calls
+import { Table, Button, Card } from 'react-bootstrap';
+import api from '../services/api';  // Assuming api.js handles API calls
 import { motion } from 'framer-motion';
-import * as XLSX from 'xlsx'; // Import XLSX for Excel export
+import * as XLSX from 'xlsx';  // For Excel export functionality
+import { FaArrowLeft, FaEdit, FaPrint, FaFileExcel } from 'react-icons/fa';  // Import icons from react-icons
 
 const FormulationView = () => {
-  const { formulationId, date } = useParams();  // Get formulation ID and date from URL parameters
-  const [formulation, setFormulation] = useState(null);  // Store fetched formulation data
-  const [loading, setLoading] = useState(true);  // Loading state for the spinner
+  const { formulationId, date } = useParams(); // Get URL parameters
+  const [formulation, setFormulation] = useState(null);  // State to store formulation details
+  const [loading, setLoading] = useState(true);  // State for loading indicator
+  const [error, setError] = useState(null);  // State to manage any API errors
 
-  // Fetch the formulation by ID and date
+  // Fetch formulation by id and date
   const fetchFormulation = useCallback(async () => {
+    setLoading(true);  // Start loading
+    setError(null);  // Reset error before fetching
     try {
-      const response = await api.getFormulationByIdAndDate(formulationId, date);  // API call with formatted date
-      setFormulation(response.data);  // Set the formulation data
-      setLoading(false);  // Stop loading once data is fetched
-    } catch (error) {
-      console.error('Error fetching formulation:', error);
-      setLoading(false);  // Stop loading even if an error occurs
+      const response = await api.getFormulationByIdAndDate(formulationId, date);
+      setFormulation(response.data);  // Set fetched data
+    } catch (err) {
+      console.error('Error fetching formulation:', err);
+      setError('Failed to fetch formulation. Please try again later.');  // Handle any errors
+    } finally {
+      setLoading(false);  // Stop loading once fetch completes
     }
-  }, [formulationId, date]);
+  }, [formulationId, date]);  // Only re-run when formulationId or date changes
 
-  // useEffect to fetch formulation on component mount or when formulationId/date changes
+  // Fetch the formulation when component mounts or when id/date changes
   useEffect(() => {
     fetchFormulation();
-  }, [fetchFormulation]);
+  }, [fetchFormulation]);  // Depend on the fetch function to trigger the fetch
 
-  // Function to trigger print dialog for the current page
+  if (loading) {
+    return <p>Loading...</p>;  // You can replace with a spinner
+  }
+
+  if (error) {
+    return <p className="alert alert-danger">{error}</p>;  // Display error message
+  }
+
+  if (!formulation) {
+    return <p>Formulation not found</p>;  // Handle case where no formulation data exists
+  }
+
+  // Ensure that ingredients exist before rendering
+  const ingredients = formulation.ingredient2s || [];
+
+  // Export formulation data to Excel
+  const handleExportToExcel = () => {
+    const worksheetData = [
+      ['Ingredient', 'Crude Protein (%)', 'Quantity (Kg)'],
+      ...ingredients.map(ingredient => [
+        ingredient.name,
+        ingredient.crudeProtein !== null ? ingredient.crudeProtein : 'N/A',
+        ingredient.quantityKg,
+      ])
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Formulation Details');
+    XLSX.writeFile(workbook, `Formulation_${formulationId}.xlsx`);
+  };
+
+  // Handle printing the formulation
   const handlePrint = () => {
     window.print();
   };
 
-  // Function to export the formulation details to an Excel file
-  const handleExportToExcel = () => {
-    if (!formulation) return;
-    
-    // Prepare data for Excel
-    const worksheetData = [
-      ['Formulation ID', formulation.formulationId],
-      ['Formulation Name', formulation.formulationName],
-      ['Date', new Date(formulation.date).toLocaleDateString()],
-      ['Quantity (kg)', formulation.quantity],
-      ['Target CP Value', formulation.targetCpValue],
-      [],
-      ['Ingredients'],
-      ['Name', 'Crude Protein (%)', 'Quantity (kg)'],
-      ...formulation.ingredients.map(ingredient => [
-        ingredient.name,
-        ingredient.crudeProtein,
-        ingredient.quantity,
-      ]),
-    ];
-
-    // Create the worksheet and workbook, then download the file
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Formulation Details');
-    XLSX.writeFile(workbook, `Formulation_${formulation.formulationId}.xlsx`);
-  };
-
-  // Show spinner while loading
-  if (loading) {
-    return <Spinner animation="border" />;
-  }
-
-  // Display message if no formulation is found
-  if (!formulation) {
-    return <h2>Formulation not found</h2>;
-  }
-
   return (
-    <motion.div
-      initial={{ x: -300 }}
-      animate={{ x: 0 }}
-      transition={{ type: 'spring', stiffness: 100 }}
+    <motion.div 
+      className="container" 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
     >
+      <h2>Formulation: {formulation.formulationName}</h2>
+      <p><strong>Total Quantity:</strong> {formulation.totalQuantityKg} Kg</p>
+      <p><strong>Target CP Value:</strong> {formulation.targetCpValue}%</p>
+      
+      {/* Ingredients Table */}
+      <h3>Ingredients</h3>
       <Card>
-        <Card.Header>
-          <h3>Formulation Details</h3>
-        </Card.Header>
         <Card.Body>
-          <Table bordered>
-            <tbody>
-              <tr>
-                <td><strong>Formulation ID</strong></td>
-                <td>{formulation.formulationId}</td>
-              </tr>
-              <tr>
-                <td><strong>Formulation Name</strong></td>
-                <td>{formulation.formulationName}</td>
-              </tr>
-              <tr>
-                <td><strong>Date</strong></td>
-                <td>{new Date(formulation.date).toLocaleDateString()}</td>
-              </tr>
-              <tr>
-                <td><strong>Quantity (kg)</strong></td>
-                <td>{formulation.quantity}</td>
-              </tr>
-              <tr>
-                <td><strong>Target CP Value</strong></td>
-                <td>{formulation.targetCpValue}</td>
-              </tr>
-            </tbody>
-          </Table>
-
-          <h5>Ingredients:</h5>
-          <Table bordered>
+          <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Ingredient</th>
                 <th>Crude Protein (%)</th>
-                <th>Quantity (kg)</th>
+                <th>Quantity (Kg)</th>
               </tr>
             </thead>
             <tbody>
-              {formulation.ingredients.map((ingredient, index) => (
-                <tr key={index}>
-                  <td>{ingredient.name}</td>
-                  <td>{ingredient.crudeProtein}</td>
-                  <td>{ingredient.quantity}</td>
+              {ingredients.length > 0 ? (
+                ingredients.map((ingredient, index) => (
+                  <tr key={index}>
+                    <td>{ingredient.name}</td>
+                    <td>{ingredient.crudeProtein !== null ? ingredient.crudeProtein : 'N/A'}</td>
+                    <td>{ingredient.quantityKg}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="text-center">No ingredients found</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </Table>
         </Card.Body>
+        {/* Action buttons */}
         <Card.Footer>
           <Link to={`/formulation/edit/${formulationId}/${date}`}>
-            <Button variant="warning" className="me-2">Edit</Button>
+            <Button variant="warning" className="me-2">
+              <FaEdit className="d-block d-sm-none" /> 
+              <span className="d-none d-sm-inline">Edit</span>
+            </Button>
           </Link>
-          <Button variant="info" className="me-2" onClick={handlePrint}>Print</Button>
-          <Button variant="success" className="me-2" onClick={handleExportToExcel}>Export to Excel</Button>
+          <Button variant="info" className="me-2" onClick={handlePrint}>
+            <FaPrint className="d-block d-sm-none" /> 
+            <span className="d-none d-sm-inline">Print</span>
+          </Button>
+          <Button variant="success" className="me-2" onClick={handleExportToExcel}>
+            <FaFileExcel className="d-block d-sm-none" /> 
+            <span className="d-none d-sm-inline">Export to Excel</span>
+          </Button>
           <Link to="/formulations">
-            <Button variant="secondary">Back to List</Button>
+            <Button variant="secondary">
+              <FaArrowLeft className="d-block d-sm-none" /> 
+              <span className="d-none d-sm-inline">Back to List</span>
+            </Button>
           </Link>
         </Card.Footer>
       </Card>
