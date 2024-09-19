@@ -23,14 +23,13 @@ const FormulationEdit = () => {
   // Function to fetch the formulation details from the API
   const fetchFormulation = useCallback(async () => {
     try {
-      const response = await api.get('/feed-formulation'); // Fetch all formulations
-      const found = response.data.find(f => f.formulationId === id); // Find the formulation with the matching ID
-      if (found) {
-        setFormulation(found); // Set the found formulation in state
+      const response = await api.get(`/feed-formulation/${id}`); // Fetch formulation with the ID from URL
+      if (response.data) {
+        setFormulation(response.data); // Set the found formulation in state
         setFormData({
-          formulationName: found.formulationName, // Populate form data with the formulation's name
-          quantity: found.quantity, // Populate form data with the formulation's quantity
-          targetCpValue: found.targetCpValue // Populate form data with the formulation's target CP value
+          formulationName: response.data.formulationName, // Populate form data with the formulation's name
+          quantity: response.data.quantity, // Populate form data with the formulation's quantity
+          targetCpValue: response.data.targetCpValue // Populate form data with the formulation's target CP value
         });
       }
       setLoading(false); // Set loading state to false after fetching
@@ -38,7 +37,7 @@ const FormulationEdit = () => {
       console.error('Error fetching formulation:', error); // Log error to console
       setLoading(false); // Set loading state to false if an error occurs
     }
-  }, [id]);
+  }, [id]); // Re-fetch whenever ID changes
 
   // useEffect hook to fetch formulation details when the component mounts or the ID changes
   useEffect(() => {
@@ -82,7 +81,7 @@ const FormulationEdit = () => {
       // Send PUT request to API to update the formulation
       await api.put(`/feed-formulation/${formulation.formulationId}/${formulation.date}`, formData);
       toast.success('Formulation updated successfully!'); // Show success toast notification
-      navigate(`/formulations/${formulation.formulationId}`); // Navigate back to the updated formulation's page
+      navigate(`/formulation/view/${formulation.formulationId}/${formulation.date}`); // Navigate back to the updated formulation's page
     } catch (error) {
       console.error('Error updating formulation:', error); // Log error to console
       toast.error('Failed to update formulation.'); // Show error toast notification

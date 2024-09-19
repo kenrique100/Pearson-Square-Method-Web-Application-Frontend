@@ -4,7 +4,7 @@ import api from '../services/api'; // Import the API service
 import { motion } from 'framer-motion';
 
 const CustomFeedFormulationView = () => {
-  const { id } = useParams();
+  const { formulationId, date } = useParams();  // Destructure to get params directly
   const [formulation, setFormulation] = useState(null);
   const [loading, setLoading] = useState(true); // State to manage loading
   const [error, setError] = useState(null); // State to manage errors
@@ -14,7 +14,7 @@ const CustomFeedFormulationView = () => {
     setLoading(true); // Set loading state to true when starting to fetch
     setError(null); // Reset error state
     try {
-      const response = await api.getCustomFormulationByIdAndDate(id, ''); // Adjust if you need to pass a date
+      const response = await api.getCustomFormulationByIdAndDate(formulationId, date);
       setFormulation(response.data);
     } catch (error) {
       console.error('Error fetching formulation:', error);
@@ -22,12 +22,12 @@ const CustomFeedFormulationView = () => {
     } finally {
       setLoading(false); // Set loading state to false after fetching
     }
-  }, [id]); // Dependency array includes 'id'
+  }, [formulationId, date]); // Only depend on formulationId and date
 
   // Call fetchFormulation inside useEffect
   useEffect(() => {
     fetchFormulation();
-  }, [fetchFormulation]); // Dependency array includes 'fetchFormulation'
+  }, [fetchFormulation]); // No need to pass id explicitly
 
   // Display loading state if formulation data is not yet available
   if (loading) {
@@ -42,6 +42,9 @@ const CustomFeedFormulationView = () => {
     return <p>Formulation not found</p>; // Handle case where no formulation is found
   }
 
+  // Ensure formulation.ingredients is an array before filtering
+  const ingredients = formulation.ingredients || [];
+
   return (
     <motion.div 
       className="container" 
@@ -53,7 +56,7 @@ const CustomFeedFormulationView = () => {
       <p>Date: {new Date(formulation.dateCreated).toLocaleDateString()}</p>
       
       <h3>Proteins</h3>
-      {formulation.ingredients
+      {ingredients
         .filter((ingredient) => ingredient.category === 'Proteins')
         .map((ingredient, index) => (
           <div key={index}>
@@ -62,7 +65,7 @@ const CustomFeedFormulationView = () => {
         ))}
       
       <h3>Carbohydrates</h3>
-      {formulation.ingredients
+      {ingredients
         .filter((ingredient) => ingredient.category === 'Carbohydrates')
         .map((ingredient, index) => (
           <div key={index}>

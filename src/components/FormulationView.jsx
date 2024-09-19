@@ -1,40 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Table, Spinner, Button, Card } from 'react-bootstrap';
+import api from '../services/api';  // Assuming apiService.js has the API calls
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx'; // Import XLSX for Excel export
-import api from '../services/api'; // Ensure proper API import
 
-// Component to view the details of a specific formulation
 const FormulationView = () => {
-  const { id } = useParams(); // Get the formulation ID from the URL parameters
-  const [formulation, setFormulation] = useState(null); // State to store the formulation details
-  const [loading, setLoading] = useState(true); // State to manage loading state
+  const { formulationId, date } = useParams();  // Get formulation ID and date from URL parameters
+  const [formulation, setFormulation] = useState(null);  // Store fetched formulation data
+  const [loading, setLoading] = useState(true);  // Loading state for the spinner
 
-  // Function to fetch the formulation details from the API
-  const fetchFormulation = async () => {
+  // Fetch the formulation by ID and date
+  const fetchFormulation = useCallback(async () => {
     try {
-      const response = await api.getFeedFormulationByIdAndDate(id); // Fetch formulation by ID and date
-      setFormulation(response); // Set the formulation in state
-      setLoading(false); // Set loading state to false after fetching
+      const response = await api.getFormulationByIdAndDate(formulationId, date);  // API call with formatted date
+      setFormulation(response.data);  // Set the formulation data
+      setLoading(false);  // Stop loading once data is fetched
     } catch (error) {
-      console.error('Error fetching formulation:', error); // Log error to console
-      setLoading(false); // Set loading state to false if an error occurs
+      console.error('Error fetching formulation:', error);
+      setLoading(false);  // Stop loading even if an error occurs
     }
-  };
+  }, [formulationId, date]);
 
-  // useEffect hook to fetch formulation details when the component mounts or when the ID changes
+  // useEffect to fetch formulation on component mount or when formulationId/date changes
   useEffect(() => {
-    fetchFormulation(); // Fetch formulation details when the component mounts or the ID changes
-  }, [id]);
+    fetchFormulation();
+  }, [fetchFormulation]);
 
-  // Function to print the formulation details
+  // Function to trigger print dialog for the current page
   const handlePrint = () => {
-    window.print(); // Trigger the print dialog for the current page
+    window.print();
   };
 
   // Function to export the formulation details to an Excel file
   const handleExportToExcel = () => {
+    if (!formulation) return;
+    
+    // Prepare data for Excel
     const worksheetData = [
       ['Formulation ID', formulation.formulationId],
       ['Formulation Name', formulation.formulationName],
@@ -51,60 +53,61 @@ const FormulationView = () => {
       ]),
     ];
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData); // Create a worksheet from the array of arrays
-    const workbook = XLSX.utils.book_new(); // Create a new workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Formulation Details'); // Append the worksheet to the workbook
-    XLSX.writeFile(workbook, `Formulation_${formulation.formulationId}.xlsx`); // Write the workbook to a file
+    // Create the worksheet and workbook, then download the file
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Formulation Details');
+    XLSX.writeFile(workbook, `Formulation_${formulation.formulationId}.xlsx`);
   };
 
-  // Display loading spinner while fetching data
+  // Show spinner while loading
   if (loading) {
     return <Spinner animation="border" />;
   }
 
-  // Display a message if the formulation is not found
+  // Display message if no formulation is found
   if (!formulation) {
     return <h2>Formulation not found</h2>;
   }
 
   return (
     <motion.div
-      initial={{ x: -300 }} // Initial animation state (off-screen to the left)
-      animate={{ x: 0 }} // Final animation state (onscreen)
-      transition={{ type: 'spring', stiffness: 100 }} // Spring animation with stiffness for a bouncing effect
+      initial={{ x: -300 }}
+      animate={{ x: 0 }}
+      transition={{ type: 'spring', stiffness: 100 }}
     >
       <Card>
         <Card.Header>
-          <h3>Formulation Details</h3> {/* Card header with title */}
+          <h3>Formulation Details</h3>
         </Card.Header>
         <Card.Body>
-          <Table bordered> {/* Table displaying formulation details */}
+          <Table bordered>
             <tbody>
               <tr>
                 <td><strong>Formulation ID</strong></td>
-                <td>{formulation.formulationId}</td> {/* Display formulation ID */}
+                <td>{formulation.formulationId}</td>
               </tr>
               <tr>
                 <td><strong>Formulation Name</strong></td>
-                <td>{formulation.formulationName}</td> {/* Display formulation name */}
+                <td>{formulation.formulationName}</td>
               </tr>
               <tr>
                 <td><strong>Date</strong></td>
-                <td>{new Date(formulation.date).toLocaleDateString()}</td> {/* Display formulation date */}
+                <td>{new Date(formulation.date).toLocaleDateString()}</td>
               </tr>
               <tr>
                 <td><strong>Quantity (kg)</strong></td>
-                <td>{formulation.quantity}</td> {/* Display formulation quantity */}
+                <td>{formulation.quantity}</td>
               </tr>
               <tr>
                 <td><strong>Target CP Value</strong></td>
-                <td>{formulation.targetCpValue}</td> {/* Display formulation target CP value */}
+                <td>{formulation.targetCpValue}</td>
               </tr>
             </tbody>
           </Table>
 
-          <h5>Ingredients:</h5> {/* Section header for ingredients */}
-          <Table bordered> {/* Table displaying ingredients details */}
+          <h5>Ingredients:</h5>
+          <Table bordered>
             <thead>
               <tr>
                 <th>Name</th>
@@ -115,30 +118,22 @@ const FormulationView = () => {
             <tbody>
               {formulation.ingredients.map((ingredient, index) => (
                 <tr key={index}>
-                  <td>{ingredient.name}</td> {/* Display ingredient name */}
-                  <td>{ingredient.crudeProtein}</td> {/* Display ingredient crude protein percentage */}
-                  <td>{ingredient.quantity}</td> {/* Display ingredient quantity */}
+                  <td>{ingredient.name}</td>
+                  <td>{ingredient.crudeProtein}</td>
+                  <td>{ingredient.quantity}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
         </Card.Body>
         <Card.Footer>
-          {/* Link to the edit page for this formulation */}
-          <Link to={`/formulations/${formulation.formulationId}/edit`}>
-            <Button variant="warning" className="me-2">Edit</Button> {/* Button to navigate to edit page */}
+          <Link to={`/formulation/edit/${formulationId}/${date}`}>
+            <Button variant="warning" className="me-2">Edit</Button>
           </Link>
-          {/* Button to print the formulation details */}
-          <Button variant="info" className="me-2" onClick={handlePrint}>
-            Print
-          </Button>
-          {/* Button to export formulation details to Excel */}
-          <Button variant="success" className="me-2" onClick={handleExportToExcel}>
-            Export to Excel
-          </Button>
-          {/* Link to navigate back to the formulations list */}
+          <Button variant="info" className="me-2" onClick={handlePrint}>Print</Button>
+          <Button variant="success" className="me-2" onClick={handleExportToExcel}>Export to Excel</Button>
           <Link to="/formulations">
-            <Button variant="secondary">Back to List</Button> {/* Button to navigate back to the formulations list */}
+            <Button variant="secondary">Back to List</Button>
           </Link>
         </Card.Footer>
       </Card>

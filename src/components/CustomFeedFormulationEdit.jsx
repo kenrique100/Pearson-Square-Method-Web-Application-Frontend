@@ -5,29 +5,39 @@ import { motion } from 'framer-motion';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 
 const CustomFeedFormulationEdit = () => {
-  const { id } = useParams();
+  const { formulationId } = useParams();
   const navigate = useNavigate();
-
   const [formulationName, setFormulationName] = useState('');
   const [proteins, setProteins] = useState([{ name: '', quantityKg: '' }]);
   const [carbohydrates, setCarbohydrates] = useState([{ name: '', quantityKg: '' }]);
+  
+  // If 'date' is needed, you can fetch or set it here. If not, remove it from the API calls.
+  const date = new Date().toISOString().split('T')[0]; // Example of setting today's date
 
   const fetchFormulation = useCallback(async () => {
     try {
-      const response = await axios.get(`/api/feed-formulations/${id}`);
-      setFormulationName(response.data.formulationName);
-      setProteins(response.data.ingredients.filter(i => i.category === 'Proteins'));
-      setCarbohydrates(response.data.ingredients.filter(i => i.category === 'Carbohydrates'));
+      const response = await axios.get(`/feed-formulations/${formulationId}/${date}`);
+      
+      setFormulationName(response.data.formulationName || ''); // Fallback to empty string if undefined
+  
+      // Ensure ingredients are defined before filtering
+      const ingredients = response.data?.ingredients || [];
+      
+      // Filter proteins and carbohydrates only if ingredients exist
+      setProteins(ingredients.filter(i => i.category === 'Proteins'));
+      setCarbohydrates(ingredients.filter(i => i.category === 'Carbohydrates'));
+  
     } catch (error) {
       console.error('Error fetching formulation:', error);
     }
-  }, [id]);
-
+  }, [formulationId, date]);
+  
+  
   useEffect(() => {
-    if (id) {
+    if (formulationId) {
       fetchFormulation();
     }
-  }, [id, fetchFormulation]);
+  }, [formulationId, fetchFormulation]);
 
   const handleAddIngredient = (setIngredients) => {
     setIngredients((prev) => [...prev, { name: '', quantityKg: '' }]);
@@ -51,7 +61,7 @@ const CustomFeedFormulationEdit = () => {
       ],
     };
     try {
-      await axios.put(`/api/feed-formulations/${id}`, newFormulation);
+      await axios.put(`/feed-formulations/${formulationId}/${date}`, newFormulation);
       alert('Formulation updated successfully');
       navigate('/feed-formulations');
     } catch (error) {

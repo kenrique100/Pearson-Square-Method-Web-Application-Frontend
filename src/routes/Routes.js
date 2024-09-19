@@ -9,23 +9,20 @@ import CustomFeedFormulationCreate from '../components/CustomFeedFormulationCrea
 import CustomFeedFormulationView from '../components/CustomFeedFormulationView';
 import CustomFeedFormulationEdit from '../components/CustomFeedFormulationEdit';
 
-const AppRoutes = () => {
-  return (
-    <Routes>
-      {/* FeedFormulationController CRUD routes */}
-      <Route path="/" element={<FormulationList />} />
-      <Route path="/formulation/create" element={<FormulationCreate />} />
-      <Route path="/formulation/view/:id" element={<FormulationView />} />
-      <Route path="/formulation/edit/:id" element={<FormulationEdit />} />
+const AppRoutes = () => (
+  <Routes>
+    {/* Standard FeedFormulationController Routes */}
+    <Route path="/" element={<FormulationList />} />
+    <Route path="/formulation/create" element={<FormulationCreate />} />
+    <Route path="/formulation/view/:formulationId/:date" element={<FormulationView />} />
+    <Route path="/formulation/edit/:formulationId/:date" element={<FormulationEdit />} />
 
-      {/* CustomFeedFormulationController CRUD routes */}
-      <Route path="/custom/formulation/list" element={<CustomFeedFormulationList />} />
-      <Route path="/custom/formulation/create" element={<CustomFeedFormulationCreate />} />
-      <Route path="/custom/formulation/view/:id" element={<CustomFeedFormulationView />} />
-      <Route path="/custom/formulation/edit/:id" element={<CustomFeedFormulationEdit />} />
-    </Routes>
-  );
-};
+    {/* CustomFeedFormulationController Routes */}
+    <Route path="/custom/formulation/list" element={<CustomFeedFormulationList />} />
+    <Route path="/custom/formulation/create" element={<CustomFeedFormulationCreate />} />
+    <Route path="/custom/formulation/view/:formulationId/:date" element={<CustomFeedFormulationView />} />
+    <Route path="/custom/formulation/edit/:id/:date" element={<CustomFeedFormulationEdit />} />
+  </Routes>
+);
 
 export default AppRoutes;
-
