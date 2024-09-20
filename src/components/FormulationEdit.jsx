@@ -6,45 +6,44 @@ import 'react-toastify/dist/ReactToastify.css';
 import api from '../services/api';
 import { motion } from 'framer-motion';
 
-// Component for editing an existing feed formulation
 const FormulationEdit = () => {
-  const { id } = useParams(); // Get the formulation ID from the URL parameters
-  const navigate = useNavigate(); // Initialize navigation hook
-  const [formulation, setFormulation] = useState(null); // State to store the formulation details
-  const [loading, setLoading] = useState(true); // State to manage loading state
-  const [showEditModal, setShowEditModal] = useState(false); // State to manage visibility of the edit modal
+  const { formulationId, date } = useParams(); // Get formulationId and date from URL params
+  const navigate = useNavigate(); // For redirecting user
+  const [formulation, setFormulation] = useState(null); // Holds formulation data
+  const [loading, setLoading] = useState(true); // Shows loading spinner
+  const [showEditModal, setShowEditModal] = useState(false); // Controls the edit modal visibility
   const [formData, setFormData] = useState({
-    formulationName: '',  // New state for formulation name
+    formulationName: '',
     quantity: '',
     targetCpValue: ''
-  }); // State to manage form data
-  const [errors, setErrors] = useState({}); // State to manage form validation errors
+  });
+  const [errors, setErrors] = useState({}); // Holds form validation errors
 
-  // Function to fetch the formulation details from the API
+  // Fetch formulation details using formulationId and date
   const fetchFormulation = useCallback(async () => {
     try {
-      const response = await api.get(`/feed-formulation/${id}`); // Fetch formulation with the ID from URL
+      const response = await api.getFormulationByIdAndDate(formulationId, date);
       if (response.data) {
-        setFormulation(response.data); // Set the found formulation in state
+        setFormulation(response.data); // Set fetched formulation data
         setFormData({
-          formulationName: response.data.formulationName, // Populate form data with the formulation's name
-          quantity: response.data.quantity, // Populate form data with the formulation's quantity
-          targetCpValue: response.data.targetCpValue // Populate form data with the formulation's target CP value
+          formulationName: response.data.formulationName,
+          quantity: response.data.quantity,
+          targetCpValue: response.data.targetCpValue
         });
       }
-      setLoading(false); // Set loading state to false after fetching
+      setLoading(false); // Stop the loading spinner
     } catch (error) {
-      console.error('Error fetching formulation:', error); // Log error to console
-      setLoading(false); // Set loading state to false if an error occurs
+      console.error('Error fetching formulation:', error);
+      setLoading(false); // Stop loading even if there is an error
     }
-  }, [id]); // Re-fetch whenever ID changes
+  }, [formulationId, date]);
 
-  // useEffect hook to fetch formulation details when the component mounts or the ID changes
+  // Fetch formulation when the component is mounted
   useEffect(() => {
-    fetchFormulation(); // Fetch formulation when component mounts or ID changes
+    fetchFormulation();
   }, [fetchFormulation]);
 
-  // Function to handle form input changes
+  // Handle form input change
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -52,59 +51,49 @@ const FormulationEdit = () => {
     });
   };
 
-  // Function to validate form data before submission
+  // Form validation function
   const validate = () => {
     const errs = {};
-    // Validate formulation name (must not be empty)
-    if (!formData.formulationName || formData.formulationName.trim() === '') {
+    if (!formData.formulationName.trim()) {
       errs.formulationName = 'Formulation name is required.';
     }
-    // Validate quantity (must be between 1 and 1000 kg)
-    if (!formData.quantity || formData.quantity <= 0 || formData.quantity > 1000) {
-      errs.quantity = 'Quantity must be between 1 and 1000 kg.';
+    if (!formData.quantity || formData.quantity <= 0 || formData.quantity > 5000) {
+      errs.quantity = 'Quantity must be between 1 and 5000 kg.';
     }
-    // Validate target CP value (must be greater than zero)
     if (!formData.targetCpValue || formData.targetCpValue <= 0) {
       errs.targetCpValue = 'Target CP Value must be greater than zero.';
     }
-    return errs; // Return any validation errors found
+    return errs;
   };
 
-  // Function to handle form submission
+  // Handle form submission for updating the formulation
   const handleSubmit = async () => {
-    const validationErrors = validate(); // Validate form data
-    if (Object.keys(validationErrors).length !== 0) {
-      setErrors(validationErrors); // If errors exist, set them in state and abort submission
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors); // Set errors if validation fails
       return;
     }
     try {
-      // Send PUT request to API to update the formulation
-      await api.put(`/feed-formulation/${formulation.formulationId}/${formulation.date}`, formData);
-      toast.success('Formulation updated successfully!'); // Show success toast notification
-      navigate(`/formulation/view/${formulation.formulationId}/${formulation.date}`); // Navigate back to the updated formulation's page
+      await api.updateFeedFormulationByIdAndDate(formulationId, date, formData);
+      toast.success('Formulation updated successfully!');
+      navigate(`/formulation/view/${formulationId}/${date}`); // Redirect to view the updated formulation
     } catch (error) {
-      console.error('Error updating formulation:', error); // Log error to console
-      toast.error('Failed to update formulation.'); // Show error toast notification
+      console.error('Error updating formulation:', error);
+      toast.error('Failed to update formulation.');
     }
   };
 
-  // Display loading spinner while fetching data
   if (loading) {
-    return <Spinner animation="border" />;
+    return <Spinner animation="border" />; // Display spinner while loading
   }
 
-  // Display a message if the formulation is not found
   if (!formulation) {
-    return <h2>Formulation not found</h2>;
+    return <h2>Formulation not found</h2>; // Display error message if no formulation is found
   }
 
   return (
-    <motion.div
-      initial={{ scale: 0.8 }} // Initial animation state
-      animate={{ scale: 1 }} // Final animation state
-      transition={{ duration: 0.3 }} // Animation duration
-    >
-      <ToastContainer /> {/* Container for displaying toast notifications */}
+    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }}>
+      <ToastContainer />
       <h2>Edit Formulation</h2>
       <Button variant="primary" onClick={() => setShowEditModal(true)}>
         Edit Details
@@ -117,7 +106,7 @@ const FormulationEdit = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Input field for formulation name */}
+            {/* Formulation Name */}
             <Form.Group controlId="formFormulationName" className="mb-3">
               <Form.Label>Formulation Name</Form.Label>
               <Form.Control
@@ -125,14 +114,14 @@ const FormulationEdit = () => {
                 name="formulationName"
                 value={formData.formulationName}
                 onChange={handleChange}
-                isInvalid={!!errors.formulationName} // Show validation error if any
+                isInvalid={!!errors.formulationName}
               />
               <Form.Control.Feedback type="invalid">
-                {errors.formulationName} {/* Display formulation name validation error */}
+                {errors.formulationName}
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Input field for quantity */}
+            {/* Quantity */}
             <Form.Group controlId="formQuantity" className="mb-3">
               <Form.Label>Quantity (kg)</Form.Label>
               <Form.Control
@@ -140,14 +129,14 @@ const FormulationEdit = () => {
                 name="quantity"
                 value={formData.quantity}
                 onChange={handleChange}
-                isInvalid={!!errors.quantity} // Show validation error if any
+                isInvalid={!!errors.quantity}
               />
               <Form.Control.Feedback type="invalid">
-                {errors.quantity} {/* Display quantity validation error */}
+                {errors.quantity}
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Input field for target CP value */}
+            {/* Target CP Value */}
             <Form.Group controlId="formTargetCpValue" className="mb-3">
               <Form.Label>Target CP Value</Form.Label>
               <Form.Control
@@ -155,14 +144,13 @@ const FormulationEdit = () => {
                 name="targetCpValue"
                 value={formData.targetCpValue}
                 onChange={handleChange}
-                isInvalid={!!errors.targetCpValue} // Show validation error if any
+                isInvalid={!!errors.targetCpValue}
               />
               <Form.Control.Feedback type="invalid">
-                {errors.targetCpValue} {/* Display target CP value validation error */}
+                {errors.targetCpValue}
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Buttons for canceling or submitting the form */}
             <Button variant="secondary" onClick={() => setShowEditModal(false)} className="me-2">
               Cancel
             </Button>
@@ -176,4 +164,4 @@ const FormulationEdit = () => {
   );
 };
 
-export default FormulationEdit; // Export component as default
+export default FormulationEdit;
