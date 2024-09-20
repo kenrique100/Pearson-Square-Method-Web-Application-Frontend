@@ -1,91 +1,94 @@
-import React, { useState } from 'react';
-import { Form, Button, Spinner } from 'react-bootstrap';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import api from '../services/api'; // Adjust import based on your service
+import React, { useState } from 'react'; 
+import { Form, Button, Spinner } from 'react-bootstrap'; 
+import { toast, ToastContainer } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
+import api from '../services/api'; 
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; 
 
-// Component for creating a new feed formulation
 const FormulationCreate = () => {
-  const navigate = useNavigate(); // Initialize navigation hook
-  const [formData, setFormData] = useState({
-    formulationName: '', // New state for formulation name
+  const navigate = useNavigate();  // Hook for programmatic navigation
+  const [data, setData] = useState({
+    formulationName: '',
     quantity: '',
     targetCpValue: ''
-  }); // State to manage form data
-  const [errors, setErrors] = useState({}); // State to manage form validation errors
-  const [loading, setLoading] = useState(false); // State to manage loading state
+  });
+  const [errors, setErrors] = useState({}); // State to hold validation errors
+  const [loading, setLoading] = useState(false); // State to control loading spinner
 
-  // Function to handle form input changes
+  // Handle input change and update the respective state field
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setData({
+      ...data,
       [e.target.name]: e.target.value
     });
   };
 
-  // Function to validate form data before submission
+  // Validate the input fields before submission
   const validate = () => {
     const errs = {};
-    // Validate formulation name
-    if (!formData.formulationName || formData.formulationName.trim() === '') {
+    if (!data.formulationName.trim()) {
       errs.formulationName = 'Formulation Name is required.';
     }
-    // Validate quantity (must be between 1 and 1000 kg)
-    if (!formData.quantity || formData.quantity <= 0 || formData.quantity > 1000) {
-      errs.quantity = 'Quantity must be between 1 and 1000 kg.';
+    if (!data.quantity || data.quantity <= 0 || data.quantity > 5000) {
+      errs.quantity = 'Quantity must be between 1 and 5000 kg.';
     }
-    // Validate target CP value (must be greater than zero)
-    if (!formData.targetCpValue || formData.targetCpValue <= 0) {
+    if (!data.targetCpValue || data.targetCpValue <= 0) {
       errs.targetCpValue = 'Target CP Value must be greater than zero.';
     }
-    return errs; // Return any validation errors found
+    return errs;
   };
 
-  // Function to handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent default form submission behavior
-    const validationErrors = validate(); // Validate form data
-    if (Object.keys(validationErrors).length !== 0) {
-      setErrors(validationErrors); // If errors exist, set them in state and abort submission
+    const validationErrors = validate(); // Validate form inputs
+  
+    // If there are validation errors, set them and stop submission
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors);
       return;
     }
-    setLoading(true); // Set loading state to true while the request is being made
+  
+    setLoading(true); // Set loading state to true to show spinner
     try {
-      const response = await api.createFeedFormulation(formData, true); // Call custom API
-      toast.success('Formulation created successfully!'); // Show success toast notification
-      navigate(`/formulations/${response.formulationId}`); // Navigate to the newly created formulation's page
+      // Call the API to create a new formulation without assigning the response to a variable
+      await api.createFormulation(data);
+      toast.success('Formulation created successfully!'); // Show success toast
+      setLoading(false);
+  
+      // After successful creation, redirect to the FormulationList page
+      navigate('/'); // Redirects to the list of formulations
     } catch (error) {
-      console.error('Error creating formulation:', error); // Log error to console
-      const errorMessage = error.message || 'Failed to create formulation.'; // Handle error message
-      toast.error(errorMessage); // Show error toast notification
-    } finally {
-      setLoading(false); // Set loading state to false after request is complete
+      console.error('Error creating formulation:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create formulation.';
+      toast.error(errorMessage); // Show error toast
+      setLoading(false); // Set loading to false if the request fails
     }
   };
+  
 
   return (
     <motion.div
-      initial={{ y: 50, opacity: 0 }} // Initial animation state
-      animate={{ y: 0, opacity: 1 }} // Final animation state
-      transition={{ duration: 0.5 }} // Animation duration
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
     >
-      <ToastContainer /> {/* Container for displaying toast notifications */}
+      <ToastContainer /> {/* Container for showing toast notifications */}
       <h2>Create New Formulation</h2>
-      <Form onSubmit={handleSubmit}> {/* Form to create a new formulation */}
+      <Form onSubmit={handleSubmit}> {/* Form for creating a formulation */}
         <Form.Group controlId="formFormulationName" className="mb-3">
           <Form.Label>Formulation Name</Form.Label>
           <Form.Control
             type="text"
             name="formulationName"
-            value={formData.formulationName}
+            value={data.formulationName}
             onChange={handleChange}
-            isInvalid={!!errors.formulationName} // Show validation error if any
+            isInvalid={!!errors.formulationName} // Display validation error if any
             placeholder="Enter formulation name"
           />
           <Form.Control.Feedback type="invalid">
-            {errors.formulationName} {/* Display formulation name validation error */}
+            {errors.formulationName} {/* Show error message for name */}
           </Form.Control.Feedback>
         </Form.Group>
 
@@ -94,13 +97,13 @@ const FormulationCreate = () => {
           <Form.Control
             type="number"
             name="quantity"
-            value={formData.quantity}
+            value={data.quantity}
             onChange={handleChange}
-            isInvalid={!!errors.quantity} // Show validation error if any
+            isInvalid={!!errors.quantity} // Display validation error if any
             placeholder="Enter quantity in kilograms"
           />
           <Form.Control.Feedback type="invalid">
-            {errors.quantity} {/* Display quantity validation error */}
+            {errors.quantity} {/* Show error message for quantity */}
           </Form.Control.Feedback>
         </Form.Group>
 
@@ -109,13 +112,13 @@ const FormulationCreate = () => {
           <Form.Control
             type="number"
             name="targetCpValue"
-            value={formData.targetCpValue}
+            value={data.targetCpValue}
             onChange={handleChange}
-            isInvalid={!!errors.targetCpValue} // Show validation error if any
+            isInvalid={!!errors.targetCpValue} // Display validation error if any
             placeholder="Enter target CP value"
           />
           <Form.Control.Feedback type="invalid">
-            {errors.targetCpValue} {/* Display target CP value validation error */}
+            {errors.targetCpValue} {/* Show error message for CP value */}
           </Form.Control.Feedback>
         </Form.Group>
 
