@@ -43,7 +43,7 @@ const FormulationView = () => {
           </style>
         </head>
         <body>
-          ${printContent.innerHTML} // Write the content to the new window
+          ${printContent.innerHTML}
         </body>
       </html>
     `);
@@ -94,39 +94,45 @@ const FormulationView = () => {
       animate={{ x: 0 }}
       transition={{ type: 'spring', stiffness: 100 }}
     >
-      <Card>
-        <Card.Header>
-          <h3>Formulation Details</h3>
-        </Card.Header>
+      {/* Printable area containing all details */}
+      <div id="printableArea">
+        <h2>Formulation Details: {formulation.formulationName}</h2>
+        <Card>
         <Card.Body>
           <div id="printableArea"> {/* Div for content to be printed */}
-            <Table bordered>
-              <tbody>
-                <tr>
-                  <td><strong>Formulation ID</strong></td>
-                  <td>{formulation.formulationId}</td>
-                </tr>
-                <tr>
-                  <td><strong>Formulation Name</strong></td>
-                  <td>{formulation.formulationName}</td>
-                </tr>
-                <tr>
-                  <td><strong>Date</strong></td>
-                  <td>{new Date(formulation.date).toLocaleDateString()}</td>
-                </tr>
-                <tr>
-                  <td><strong>Quantity (kg)</strong></td>
-                  <td>{formulation.quantity}</td>
-                </tr>
-                <tr>
-                  <td><strong>Target CP Value</strong></td>
-                  <td>{formulation.targetCpValue}</td>
-                </tr>
-              </tbody>
+            <Table striped bordered hovered>
+                <thead>
+                  <tr>
+                    <th>Detail</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Formulation ID</strong></td>
+                    <td>{formulation.formulationId}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Formulation Name</strong></td>
+                    <td>{formulation.formulationName}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Date</strong></td>
+                    <td>{new Date(formulation.date).toLocaleDateString()}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Quantity (kg)</strong></td>
+                    <td>{formulation.quantity}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Target CP Value</strong></td>
+                    <td>{formulation.targetCpValue}</td>
+                  </tr>
+                  </tbody>
             </Table>
 
             <h5>Ingredients:</h5>
-            <Table bordered>
+            <Table striped bordered hoverbordered>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -146,7 +152,9 @@ const FormulationView = () => {
             </Table>
           </div>
         </Card.Body>
-        <Card.Footer>
+        </Card>
+         </div>
+        <Card.Footer className='mt-4'>
           <Link to={`/formulation/edit/${formulationId}/${date}`}>
             <Button variant="warning" className="me-2">
               <FaEdit className="d-block d-sm-none" />
@@ -168,7 +176,6 @@ const FormulationView = () => {
             </Button>
           </Link>
         </Card.Footer>
-      </Card>
     </motion.div>
   );
 };

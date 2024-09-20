@@ -75,21 +75,29 @@ const CustomFeedFormulationView = () => {
     XLSX.writeFile(workbook, `Formulation_${formulationId}.xlsx`);
   };
 
-  // Handle print functionality for the entire page
+  // Function to handle printing of the formulation details
   const handlePrint = () => {
-    const printContents = document.getElementById('printableArea').innerHTML; // Get contents to print
-    const win = window.open(); // Open a new window
-    win.document.write(`
+    const printContent = document.getElementById('printableArea'); // Get the printable area
+    const newWindow = window.open('', '', 'width=900,height=600'); // Open a new window
+    newWindow.document.write(`
       <html>
         <head>
           <title>Print Formulation</title>
-          <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+          <style>
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+            h3 { text-align: center; }
+          </style>
         </head>
-        <body onload="window.print();">${printContents}</body>
+        <body>
+          ${printContent.innerHTML}
+        </body>
       </html>
-    `); // Write the contents to the new window and trigger print
-    win.document.close(); // Close the document
+    `);
+    newWindow.document.close(); // Close the document for the new window
+    newWindow.print(); // Trigger print dialog
   };
+
 
   return (
     <motion.div 
@@ -100,34 +108,34 @@ const CustomFeedFormulationView = () => {
     >
       {/* Printable area containing all details */}
       <div id="printableArea">
-        <h2>Formulation: {formulation.formulationName}</h2>
+        <h2>Formulation Details: {formulation.formulationName}</h2>
+        <Card>
+            <Card.Body>
         <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Detail</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Total Quantity</td>
-              <td>{formulation.totalQuantityKg} Kg</td>
-            </tr>
-            <tr>
-              <td>Target CP Value</td>
-              <td>{formulation.targetCpValue}%</td>
-            </tr>
-            <tr>
-              <td>Date Created</td>
-              <td>{formulation.date}</td>
-            </tr>
-          </tbody>
+              <thead>
+                <tr>
+                  <th>Detail</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Total Quantity</td>
+                  <td>{formulation.totalQuantityKg} Kg</td>
+                </tr>
+                <tr>
+                  <td>Target CP Value</td>
+                  <td>{formulation.targetCpValue}%</td>
+                </tr>
+                <tr>
+                  <td>Date Created</td>
+                  <td>{formulation.date}</td>
+                </tr>
+              </tbody>
         </Table>
 
         {/* Display Ingredients in a Table */}
         <h3>Ingredients</h3>
-        <Card>
-          <Card.Body>
             <Table striped bordered hover>
               <thead>
                 <tr>
@@ -157,7 +165,7 @@ const CustomFeedFormulationView = () => {
       </div>
 
       {/* Action buttons */}
-      <Card.Footer>
+      <Card.Footer className='mt-4'>
         <Link to={`/custom/formulation/edit/${formulationId}/${date}`}>
           <Button variant="warning" className="me-2">
             <FaEdit className="d-block d-sm-none" /> {/* Icon on small screen */}
