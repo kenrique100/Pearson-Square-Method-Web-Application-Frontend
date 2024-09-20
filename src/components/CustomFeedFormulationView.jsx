@@ -80,8 +80,29 @@ const CustomFeedFormulationView = () => {
     >
       {/* Display Formulation Details */}
       <h2>Formulation: {formulation.formulationName}</h2>
-      <p><strong>Total Quantity:</strong> {formulation.totalQuantityKg} Kg</p>
-      <p><strong>Target CP Value:</strong> {formulation.targetCpValue}%</p>
+      <Table striped bordered hover>
+  <thead>
+    <tr>
+      <th>Detail</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Total Quantity</td>
+      <td>{formulation.totalQuantityKg} Kg</td>
+    </tr>
+    <tr>
+      <td>Target CP Value</td>
+      <td>{formulation.targetCpValue}%</td>
+    </tr>
+    <tr>
+      <td>Date Created</td>
+      <td>{formulation.date}</td>
+    </tr>
+  </tbody>
+</Table>
+
       
       {/* Display Ingredients in a Table */}
       <h3>Ingredients</h3>
@@ -114,7 +135,7 @@ const CustomFeedFormulationView = () => {
         </Card.Body>
         {/* Action buttons */}
         <Card.Footer>
-          <Link to={`/feed-formulation/edit/${formulationId}/${date}`}>
+          <Link to={`/custom/formulation/edit/${formulationId}/${date}`}>
             <Button variant="warning" className="me-2">
               <FaEdit className="d-block d-sm-none" /> {/* Icon on small screen */}
               <span className="d-none d-sm-inline">Edit</span> {/* Text on larger screen */}
@@ -128,7 +149,7 @@ const CustomFeedFormulationView = () => {
             <FaFileExcel className="d-block d-sm-none" /> {/* Icon on small screen */}
             <span className="d-none d-sm-inline">Export to Excel</span> {/* Text on larger screen */}
           </Button>
-          <Link to="/formulations">
+          <Link to="/custom/formulation/list">
             <Button variant="secondary">
               <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screen */}
               <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screen */}
