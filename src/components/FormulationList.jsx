@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Spinner, Modal, Dropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import api from '../services/api';
 import 'react-toastify/dist/ReactToastify.css';
 
 const FormulationList = () => {
@@ -16,7 +16,6 @@ const FormulationList = () => {
     const fetchFormulations = async () => {
       try {
         const { data } = await api.getFormulations();
-        console.log('API response:', data); // Debugging line to inspect API response
         setFormulations(data);
       } catch (error) {
         console.error('Error fetching formulations:', error);
@@ -24,6 +23,7 @@ const FormulationList = () => {
         setLoading(false);
       }
     };
+
     fetchFormulations();
   }, []);
 
@@ -37,7 +37,9 @@ const FormulationList = () => {
     try {
       await api.deleteFeedFormulationByIdAndDate(formulationId, date);
       toast.success('Formulation deleted successfully!');
-      setFormulations((prev) => prev.filter((f) => f.formulationId !== formulationId));
+      setFormulations(prevFormulations => 
+        prevFormulations.filter(f => f.formulationId !== formulationId)
+      );
     } catch (error) {
       console.error('Error deleting formulation:', error);
       toast.error('Error deleting formulation');
@@ -65,12 +67,12 @@ const FormulationList = () => {
           </tr>
         </thead>
         <tbody>
-          {formulations.map(({ formulationId, formulationName, date, totalQuantityKg, targetCpValue }) => (
+          {formulations.map(({ formulationId, formulationName, date, quantity, targetCpValue }) => (
             <tr key={formulationId}>
               <td>{formulationId}</td>
               <td>{formulationName}</td>
-              <td>{new Date(date).toLocaleDateString()}</td> {/* Format the date here */}
-              <td>{totalQuantityKg ? totalQuantityKg : 'N/A'}</td> {/* Ensure you're displaying the correct field */}
+              <td>{new Date(date).toLocaleDateString()}</td>
+              <td>{quantity || 'N/A'}</td>
               <td>{targetCpValue}</td>
               <td>
                 <ActionButtons
@@ -93,10 +95,8 @@ const FormulationList = () => {
   );
 };
 
-// Action buttons component with dropdown for small screens
 const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   <>
-    {/* Action buttons for larger screens (md and up) */}
     <div className="d-none d-md-inline">
       <Link to={`/formulation/view/${formulationId}/${date}`}>
         <Button variant="primary" className="me-2">View</Button>
@@ -109,13 +109,9 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
       </Button>
     </div>
 
-    {/* Dropdown for smaller screens (below md) */}
     <div className="d-md-none">
       <Dropdown>
-        <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-          Actions
-        </Dropdown.Toggle>
-
+        <Dropdown.Toggle variant="secondary">Actions</Dropdown.Toggle>
         <Dropdown.Menu>
           <Dropdown.Item as={Link} to={`/formulation/view/${formulationId}/${date}`}>
             View
@@ -132,7 +128,6 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   </>
 );
 
-// Delete Confirmation Modal component
 const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   <Modal show={show} onHide={onHide}>
     <Modal.Header closeButton>
