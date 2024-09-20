@@ -7,18 +7,18 @@ import * as XLSX from 'xlsx';  // For Excel export functionality
 import { FaArrowLeft, FaEdit, FaPrint, FaFileExcel } from 'react-icons/fa';  // Import icons from react-icons
 
 const CustomFeedFormulationView = () => {
-  const { formulationId, date } = useParams(); // Destructure to get params directly
-  const [formulation, setFormulation] = useState(null);
+  const { formulationId, date } = useParams(); // Get formulation ID and date from URL parameters
+  const [formulation, setFormulation] = useState(null); // State to hold the fetched formulation
   const [loading, setLoading] = useState(true); // State to manage loading
   const [error, setError] = useState(null); // State to manage errors
 
-  // Define fetchFormulation with useCallback to prevent re-creating it on every render
+  // Fetch formulation data using useCallback to prevent re-creation on every render
   const fetchFormulation = useCallback(async () => {
     setLoading(true); // Set loading state to true when starting to fetch
     setError(null); // Reset error state
     try {
       const response = await api.getCustomFormulationByIdAndDate(formulationId, date);
-      setFormulation(response.data);
+      setFormulation(response.data); // Store fetched formulation data
     } catch (error) {
       console.error('Error fetching formulation:', error);
       setError('Failed to fetch formulation.'); // Set error message
@@ -29,8 +29,8 @@ const CustomFeedFormulationView = () => {
 
   // Call fetchFormulation inside useEffect
   useEffect(() => {
-    fetchFormulation();
-  }, [fetchFormulation]); // No need to pass id explicitly
+    fetchFormulation(); // Fetch formulation data when component mounts
+  }, [fetchFormulation]); // Dependency array to call when dependencies change
 
   // Display loading state if formulation data is not yet available
   if (loading) {
@@ -48,9 +48,18 @@ const CustomFeedFormulationView = () => {
   // Ensure formulation.ingredients is an array before rendering
   const ingredients = formulation.ingredient2s || [];
 
-  // Handle Excel export
+  // Handle Excel export for the entire formulation including details and ingredients
   const handleExportToExcel = () => {
+    // Prepare worksheet data for the entire formulation
     const worksheetData = [
+      ['Formulation Details'],
+      ['ID', formulation.formulationId],
+      ['Formulation Name', formulation.formulationName],
+      ['Total Quantity (Kg)', formulation.totalQuantityKg],
+      ['Target CP Value (%)', formulation.targetCpValue],
+      ['Date Created', formulation.date],
+      [],
+      ['Ingredients'],
       ['Ingredient', 'Crude Protein (%)', 'Quantity (Kg)'],
       ...ingredients.map(ingredient => [
         ingredient.name,
@@ -66,9 +75,20 @@ const CustomFeedFormulationView = () => {
     XLSX.writeFile(workbook, `Formulation_${formulationId}.xlsx`);
   };
 
-  // Handle print
+  // Handle print functionality for the entire page
   const handlePrint = () => {
-    window.print();
+    const printContents = document.getElementById('printableArea').innerHTML; // Get contents to print
+    const win = window.open(); // Open a new window
+    win.document.write(`
+      <html>
+        <head>
+          <title>Print Formulation</title>
+          <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        </head>
+        <body onload="window.print();">${printContents}</body>
+      </html>
+    `); // Write the contents to the new window and trigger print
+    win.document.close(); // Close the document
   };
 
   return (
@@ -78,87 +98,89 @@ const CustomFeedFormulationView = () => {
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
     >
-      {/* Display Formulation Details */}
-      <h2>Formulation: {formulation.formulationName}</h2>
-      <Table striped bordered hover>
-  <thead>
-    <tr>
-      <th>Detail</th>
-      <th>Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Total Quantity</td>
-      <td>{formulation.totalQuantityKg} Kg</td>
-    </tr>
-    <tr>
-      <td>Target CP Value</td>
-      <td>{formulation.targetCpValue}%</td>
-    </tr>
-    <tr>
-      <td>Date Created</td>
-      <td>{formulation.date}</td>
-    </tr>
-  </tbody>
-</Table>
+      {/* Printable area containing all details */}
+      <div id="printableArea">
+        <h2>Formulation: {formulation.formulationName}</h2>
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Detail</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Total Quantity</td>
+              <td>{formulation.totalQuantityKg} Kg</td>
+            </tr>
+            <tr>
+              <td>Target CP Value</td>
+              <td>{formulation.targetCpValue}%</td>
+            </tr>
+            <tr>
+              <td>Date Created</td>
+              <td>{formulation.date}</td>
+            </tr>
+          </tbody>
+        </Table>
 
-      
-      {/* Display Ingredients in a Table */}
-      <h3>Ingredients</h3>
-      <Card>
-        <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Ingredient</th>
-                <th>Crude Protein (%)</th>
-                <th>Quantity (Kg)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ingredients.length > 0 ? (
-                ingredients.map((ingredient, index) => (
-                  <tr key={index}>
-                    <td>{ingredient.name}</td>
-                    <td>{ingredient.crudeProtein !== null ? ingredient.crudeProtein : 'N/A'}</td>
-                    <td>{ingredient.quantityKg}</td>
-                  </tr>
-                ))
-              ) : (
+        {/* Display Ingredients in a Table */}
+        <h3>Ingredients</h3>
+        <Card>
+          <Card.Body>
+            <Table striped bordered hover>
+              <thead>
                 <tr>
-                  <td colSpan="3" className="text-center">No ingredients found</td>
+                  <th>Ingredient</th>
+                  <th>Crude Protein (%)</th>
+                  <th>Quantity (Kg)</th>
                 </tr>
-              )}
-            </tbody>
-          </Table>
-        </Card.Body>
-        {/* Action buttons */}
-        <Card.Footer>
-          <Link to={`/custom/formulation/edit/${formulationId}/${date}`}>
-            <Button variant="warning" className="me-2">
-              <FaEdit className="d-block d-sm-none" /> {/* Icon on small screen */}
-              <span className="d-none d-sm-inline">Edit</span> {/* Text on larger screen */}
-            </Button>
-          </Link>
-          <Button variant="info" className="me-2" onClick={handlePrint}>
-            <FaPrint className="d-block d-sm-none" /> {/* Icon on small screen */}
-            <span className="d-none d-sm-inline">Print</span> {/* Text on larger screen */}
+              </thead>
+              <tbody>
+                {ingredients.length > 0 ? (
+                  ingredients.map((ingredient, index) => (
+                    <tr key={index}>
+                      <td>{ingredient.name}</td>
+                      <td>{ingredient.crudeProtein !== null ? ingredient.crudeProtein : 'N/A'}</td>
+                      <td>{ingredient.quantityKg}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="text-center">No ingredients found</td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+      </div>
+
+      {/* Action buttons */}
+      <Card.Footer>
+        <Link to={`/custom/formulation/edit/${formulationId}/${date}`}>
+          <Button variant="warning" className="me-2">
+            <FaEdit className="d-block d-sm-none" /> {/* Icon on small screen */}
+            <span className="d-none d-sm-inline">Edit</span> {/* Text on larger screen */}
           </Button>
-          <Button variant="success" className="me-2" onClick={handleExportToExcel}>
-            <FaFileExcel className="d-block d-sm-none" /> {/* Icon on small screen */}
-            <span className="d-none d-sm-inline">Export to Excel</span> {/* Text on larger screen */}
+        </Link>
+        <Button variant="info" className="me-2" onClick={handlePrint}>
+          <FaPrint className="d-block d-sm-none" /> {/* Icon on small screen */}
+          <span className="d-none d-sm-inline">Print</span> {/* Text on larger screen */}
+        </Button>
+        <Button variant="success" className="me-2" onClick={handleExportToExcel}>
+          <FaFileExcel className="d-block d-sm-none" /> {/* Icon on small screen */}
+          <span className="d-none d-sm-inline">Export to Excel</span> {/* Text on larger screen */}
+        </Button>
+        <Link to="/custom/formulation/list">
+          <Button variant="secondary">
+            <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screen */}
+            <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screen */}
           </Button>
-          <Link to="/custom/formulation/list">
-            <Button variant="secondary">
-              <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screen */}
-              <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screen */}
-            </Button>
-          </Link>
-        </Card.Footer>
-      </Card>
+        </Link>
+      </Card.Footer>
     </motion.div>
   );
 };
 
-export default CustomFeedFormulationView;
+export default CustomFeedFormulationView; // Export the component for use in other parts of the application
