@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api'; // Change this to your backend URL
+const API_URL = 'http://localhost:8080/api';
 
-/// Standard FeedFormulation APIs
+// Standard FeedFormulation APIs
 export const getFormulations = () => axios.get(`${API_URL}/feed-formulation`);
 export const getFormulationByIdAndDate = (formulationId, date) => axios.get(`${API_URL}/feed-formulation/${formulationId}/${date}`);
 export const createFormulation = (data) => axios.post(`${API_URL}/feed-formulation`, data);
