@@ -21,7 +21,7 @@ const AppRoutes = () => (
     <Route path="/custom/formulation/list" element={<CustomFeedFormulationList />} />
     <Route path="/custom/formulation/create" element={<CustomFeedFormulationCreate />} />
     <Route path="/custom/formulation/view/:formulationId/:date" element={<CustomFeedFormulationView />} />
-    <Route path="/custom/formulation/edit/:id/:date" element={<CustomFeedFormulationEdit />} />
+    <Route path="/custom/formulation/edit/:formulationId/:date" element={<CustomFeedFormulationEdit />} />
   </Routes>
 );
 
