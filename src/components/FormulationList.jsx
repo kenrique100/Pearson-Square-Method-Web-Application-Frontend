@@ -4,18 +4,19 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Toast CSS
+import 'react-toastify/dist/ReactToastify.css';
 
-const FeedFormulationList = () => {
+const FormulationList = () => {
   const [formulations, setFormulations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deleteModalData, setDeleteModalData] = useState({ id: null, date: null });
+  const [deleteModalData, setDeleteModalData] = useState({ formulationId: null, date: null });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchFormulations = async () => {
       try {
         const { data } = await api.getFormulations();
+        console.log('API response:', data); // Debugging line to inspect API response
         setFormulations(data);
       } catch (error) {
         console.error('Error fetching formulations:', error);
@@ -26,17 +27,17 @@ const FeedFormulationList = () => {
     fetchFormulations();
   }, []);
 
-  const openDeleteModal = (id, date) => {
-    setDeleteModalData({ id, date });
+  const openDeleteModal = (formulationId, date) => {
+    setDeleteModalData({ formulationId, date });
     setShowDeleteModal(true);
   };
 
   const handleDelete = async () => {
-    const { id, date } = deleteModalData;
+    const { formulationId, date } = deleteModalData;
     try {
-      await api.deleteFeedFormulationByIdAndDate(id, date);
+      await api.deleteFeedFormulationByIdAndDate(formulationId, date);
       toast.success('Formulation deleted successfully!');
-      setFormulations((prev) => prev.filter((f) => f.formulationId !== id));
+      setFormulations((prev) => prev.filter((f) => f.formulationId !== formulationId));
     } catch (error) {
       console.error('Error deleting formulation:', error);
       toast.error('Error deleting formulation');
@@ -64,12 +65,12 @@ const FeedFormulationList = () => {
           </tr>
         </thead>
         <tbody>
-          {formulations.map(({ formulationId, formulationName, date, quantity, targetCpValue }) => (
+          {formulations.map(({ formulationId, formulationName, date, totalQuantityKg, targetCpValue }) => (
             <tr key={formulationId}>
               <td>{formulationId}</td>
               <td>{formulationName}</td>
-              <td>{new Date(date).toLocaleDateString()}</td>
-              <td>{quantity}</td>
+              <td>{new Date(date).toLocaleDateString()}</td> {/* Format the date here */}
+              <td>{totalQuantityKg ? totalQuantityKg : 'N/A'}</td> {/* Ensure you're displaying the correct field */}
               <td>{targetCpValue}</td>
               <td>
                 <ActionButtons
@@ -97,10 +98,10 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   <>
     {/* Action buttons for larger screens (md and up) */}
     <div className="d-none d-md-inline">
-      <Link to={`/formulation/view/${formulationId}`}>
+      <Link to={`/formulation/view/${formulationId}/${date}`}>
         <Button variant="primary" className="me-2">View</Button>
       </Link>
-      <Link to={`/formulation/edit/${formulationId}`}>
+      <Link to={`/formulation/edit/${formulationId}/${date}`}>
         <Button variant="warning" className="me-2">Edit</Button>
       </Link>
       <Button variant="danger" onClick={() => openDeleteModal(formulationId, date)}>
@@ -145,4 +146,4 @@ const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   </Modal>
 );
 
-export default FeedFormulationList;
+export default FormulationList;
