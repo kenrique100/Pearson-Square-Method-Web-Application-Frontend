@@ -4,6 +4,7 @@ import { Table, Spinner, Button, Card } from 'react-bootstrap';
 import api from '../services/api';
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx'; // Import XLSX for Excel export
+import { FaArrowLeft, FaEdit, FaPrint, FaFileExcel } from 'react-icons/fa';  // Import icons from react-icons
 
 const FormulationView = () => {
   const { formulationId, date } = useParams(); // Use params for formulationId and date
@@ -117,19 +118,33 @@ const FormulationView = () => {
             </tbody>
           </Table>
         </Card.Body>
+        {/* Action buttons */}
         <Card.Footer>
-          <Link to={`/formulations/${formulation.formulationId}/edit`}>
-            <Button variant="warning" className="me-2">Edit</Button>
+          <Link to={`/formulation/edit/${formulationId}/${date}`}>
+            <Button variant="warning" className="me-2">
+              <FaEdit className="d-block d-sm-none" /> {/* Icon on small screen */}
+              <span className="d-none d-sm-inline">Edit</span> {/* Text on larger screen */}
+            </Button>
           </Link>
-          <Button variant="info" className="me-2" onClick={handlePrint}>Print</Button>
-          <Button variant="success" className="me-2" onClick={handleExportToExcel}>Export to Excel</Button>
-          <Link to="/formulations">
-            <Button variant="secondary">Back to List</Button>
+          <Button variant="info" className="me-2" onClick={handlePrint}>
+            <FaPrint className="d-block d-sm-none" /> {/* Icon on small screen */}
+            <span className="d-none d-sm-inline">Print</span> {/* Text on larger screen */}
+          </Button>
+          <Button variant="success" className="me-2" onClick={handleExportToExcel}>
+            <FaFileExcel className="d-block d-sm-none" /> {/* Icon on small screen */}
+            <span className="d-none d-sm-inline">Export to Excel</span> {/* Text on larger screen */}
+          </Button>
+          <Link to="/">
+            <Button variant="secondary">
+              <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screen */}
+              <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screen */}
+            </Button>
           </Link>
         </Card.Footer>
       </Card>
     </motion.div>
   );
 };
+
 
 export default FormulationView;
