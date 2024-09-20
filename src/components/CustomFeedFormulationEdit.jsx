@@ -3,48 +3,42 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Form, Button, Row, Col } from 'react-bootstrap';
-import { FaArrowLeft } from 'react-icons/fa';  // Import icons from react-icons
+import { FaArrowLeft } from 'react-icons/fa';
 
 const CustomFeedFormulationEdit = () => {
-  const { formulationId } = useParams(); // Get formulationId from URL parameters
-  const navigate = useNavigate(); // Hook for navigating between routes
-  const [formulationName, setFormulationName] = useState(''); // Formulation name state
-  const [proteins, setProteins] = useState([{ name: '', quantityKg: '' }]); // Protein ingredients state
-  const [carbohydrates, setCarbohydrates] = useState([{ name: '', quantityKg: '' }]); // Carbohydrate ingredients state
-  
-  // Example of setting today's date
-  const date = new Date().toISOString().split('T')[0]; 
+  const { formulationId } = useParams(); // Extract formulationId from the URL
+  const navigate = useNavigate(); // Hook for navigation
+  const [formulationName, setFormulationName] = useState(''); // State for formulation name
+  const [proteins, setProteins] = useState([{ name: '', quantityKg: '' }]); // State for protein ingredients
+  const [carbohydrates, setCarbohydrates] = useState([{ name: '', quantityKg: '' }]); // State for carbohydrate ingredients
 
-  // Fetch formulation details using the formulationId and date
+  const date = new Date().toISOString().split('T')[0]; // Today's date
+
+  // Fetch formulation details based on formulationId and date
   const fetchFormulation = useCallback(async () => {
     try {
       const response = await axios.get(`/feed-formulations/${formulationId}/${date}`);
-      
-      // Update state with fetched data, fallback to empty if undefined
-      setFormulationName(response.data.formulationName || ''); 
-  
-      // Ensure ingredients are defined and filter them
+      setFormulationName(response.data.formulationName || ''); // Set formulation name
       const ingredients = response.data?.ingredients || [];
-      setProteins(ingredients.filter(i => i.category === 'Proteins'));
-      setCarbohydrates(ingredients.filter(i => i.category === 'Carbohydrates'));
-  
+      setProteins(ingredients.filter(i => i.category === 'Proteins')); // Filter proteins
+      setCarbohydrates(ingredients.filter(i => i.category === 'Carbohydrates')); // Filter carbohydrates
     } catch (error) {
-      console.error('Error fetching formulation:', error);
+      console.error('Error fetching formulation:', error); // Error handling
     }
   }, [formulationId, date]);
-  
+
   useEffect(() => {
     if (formulationId) {
       fetchFormulation(); // Fetch formulation on component mount
     }
   }, [formulationId, fetchFormulation]);
 
-  // Function to add a new ingredient row
+  // Add a new ingredient row
   const handleAddIngredient = (setIngredients) => {
     setIngredients((prev) => [...prev, { name: '', quantityKg: '' }]);
   };
 
-  // Handle input change for ingredient fields
+  // Handle input changes for ingredient fields
   const handleInputChange = (setIngredients, index, field, value) => {
     setIngredients((prevIngredients) => {
       const newIngredients = [...prevIngredients];
@@ -53,9 +47,14 @@ const CustomFeedFormulationEdit = () => {
     });
   };
 
+  // Handle removal of an ingredient
+  const handleRemoveIngredient = (setIngredients, index) => {
+    setIngredients((prevIngredients) => prevIngredients.filter((_, i) => i !== index));
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
     const newFormulation = {
       formulationName,
       ingredients: [
@@ -65,10 +64,10 @@ const CustomFeedFormulationEdit = () => {
     };
     try {
       await axios.put(`/feed-formulations/${formulationId}/${date}`, newFormulation);
-      alert('Formulation updated successfully');
-      navigate('/feed-formulations'); // Navigate to formulations list
+      alert('Formulation updated successfully'); // Success message
+      navigate('/custom/formulation/list'); // Redirect to formulations list
     } catch (error) {
-      console.error('Error updating formulation:', error);
+      console.error('Error updating formulation:', error); // Error handling
     }
   };
 
@@ -86,7 +85,7 @@ const CustomFeedFormulationEdit = () => {
           />
         </Form.Group>
 
-        {/* Protein Ingredients */}
+        {/* Protein Ingredients Section */}
         <h4 className="mt-4">Proteins</h4>
         {proteins.map((protein, index) => (
           <Row key={index} className="mb-3">
@@ -108,6 +107,9 @@ const CustomFeedFormulationEdit = () => {
                 required
               />
             </Col>
+            <Col>
+              <Button variant="danger" onClick={() => handleRemoveIngredient(setProteins, index)}>Remove</Button>
+            </Col>
           </Row>
         ))}
         <Button 
@@ -118,7 +120,7 @@ const CustomFeedFormulationEdit = () => {
           Add Protein
         </Button>
 
-        {/* Carbohydrate Ingredients */}
+        {/* Carbohydrate Ingredients Section */}
         <h4 className="mt-4">Carbohydrates</h4>
         {carbohydrates.map((carb, index) => (
           <Row key={index} className="mb-3">
@@ -140,6 +142,9 @@ const CustomFeedFormulationEdit = () => {
                 required
               />
             </Col>
+            <Col>
+              <Button variant="danger" onClick={() => handleRemoveIngredient(setCarbohydrates, index)}>Remove</Button>
+            </Col>
           </Row>
         ))}
         <Button 
@@ -159,10 +164,10 @@ const CustomFeedFormulationEdit = () => {
           </Col>
         </Row>
         <Link to="/custom/formulation/list">
-            <Button variant="secondary">
-              <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screen */}
-              <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screen */}
-            </Button>
+          <Button variant="secondary">
+            <FaArrowLeft className="d-block d-sm-none" /> {/* Icon on small screens */}
+            <span className="d-none d-sm-inline">Back to List</span> {/* Text on larger screens */}
+          </Button>
         </Link>
       </Form>
     </motion.div>
@@ -170,4 +175,3 @@ const CustomFeedFormulationEdit = () => {
 };
 
 export default CustomFeedFormulationEdit;
-
