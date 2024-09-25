@@ -22,18 +22,18 @@ const FormulationList = () => {
   const [filter, setFilter] = useState('All');
   const itemsPerPage = 7; // Number of items to display per page in the table
 
-  // useEffect hook to fetch the formulations when the component is first mounted
+  // Fetch the formulations from the API when the component is mounted
   useEffect(() => {
     const fetchFormulations = async () => {
       try {
         // Fetch all formulations from the API
         const { data } = await api.getFormulations();
-        // Set the formulations in descending order based on creation date
-        setFormulations(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        // Sort formulations in ascending order (earliest to latest)
+        setFormulations(data.sort((a, b) => new Date(a.date) - new Date(b.date)));
       } catch (error) {
         console.error('Error fetching formulations:', error);
       } finally {
-        setLoading(false); // Set loading to false once data is fetched
+        setLoading(false); // Stop loading once the data is fetched
       }
     };
 
@@ -46,7 +46,7 @@ const FormulationList = () => {
     try {
       // Call API to delete the formulation based on its ID and date
       await api.deleteFeedFormulationByIdAndDate(formulationId, date);
-      // Show success notification on successful deletion
+      // Show success notification
       toast.success('Formulation deleted successfully!');
       // Remove the deleted formulation from the current state
       setFormulations(prevFormulations =>
@@ -61,15 +61,14 @@ const FormulationList = () => {
     }
   };
 
-  // Function to filter formulations based on the selected date range from the dropdown
+  // Function to filter formulations based on the selected filter (date range)
   const filterFormulations = () => {
-    const now = new Date(); // Get current date
-    // Filter the formulations based on the selected filter
+    const now = new Date(); // Get the current date
     return formulations.filter(({ date }) => {
-      const formulationDate = new Date(date); // Convert the formulation date to Date object
-      const timeDiff = now - formulationDate; // Calculate time difference from the current date
+      const formulationDate = new Date(date); // Convert formulation date to a Date object
+      const timeDiff = now - formulationDate; // Calculate time difference from today
 
-      // Determine which formulations to display based on the selected filter
+      // Filter based on selected filter option
       switch (filter) {
         case 'Last 24 Hours':
           return timeDiff <= 24 * 60 * 60 * 1000; // Show formulations from the last 24 hours
@@ -83,41 +82,41 @@ const FormulationList = () => {
           return timeDiff <= 365 * 24 * 60 * 60 * 1000; // Show formulations from the last year
         case 'All':
         default:
-          return true; // Show all formulations
+          return true; // Show all formulations if 'All' is selected
       }
     });
   };
 
   // Apply the filtering function to get the filtered list of formulations
   const filteredFormulations = filterFormulations();
-  // Calculate the index of the last item on the current page
+  // Calculate the index of the last item for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
-  // Calculate the index of the first item on the current page
+  // Calculate the index of the first item for pagination
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // Slice the filtered formulations to get only the items for the current page
+  // Get the formulations for the current page
   const currentFormulations = filteredFormulations.slice(indexOfFirstItem, indexOfLastItem);
   // Calculate the total number of pages for pagination
   const totalPages = Math.ceil(filteredFormulations.length / itemsPerPage);
 
-  // Show a loading spinner while the data is being fetched
+  // Show a loading spinner while data is being fetched
   if (loading) {
     return <Spinner animation="border" />;
   }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      {/* Filter Dropdown and heading */}
+      {/* Header and filter dropdown */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Formulations List</h2>
-        {/* Dropdown button for filtering formulations by date range */}
+        {/* Filter dropdown to filter formulations by date range */}
         <DropdownButton
           id="filter-dropdown"
-          title={<><FaFilter /> Filter</>} // Display filter icon and label
+          title={<><FaFilter /> Filter</>} // Display filter icon
           variant="primary"
-          onSelect={setFilter} // Update filter state on selection
+          onSelect={setFilter} // Update filter state when option is selected
           className="mb-2 mb-md-0"
         >
-          {/* Filter options for various date ranges */}
+          {/* Filter options */}
           <Dropdown.Item eventKey="Last 24 Hours">Last 24 Hours</Dropdown.Item>
           <Dropdown.Item eventKey="1 Month">1 Month</Dropdown.Item>
           <Dropdown.Item eventKey="2 Months">2 Months</Dropdown.Item>
@@ -127,7 +126,7 @@ const FormulationList = () => {
         </DropdownButton>
       </div>
 
-      {/* Table to display the formulations */}
+      {/* Table to display formulations */}
       <Table striped bordered hover responsive>
         <thead>
           <tr>
@@ -140,7 +139,7 @@ const FormulationList = () => {
           </tr>
         </thead>
         <tbody>
-          {/* Map through the current page of formulations and display in the table */}
+          {/* Display each formulation */}
           {currentFormulations.map(({ formulationId, formulationName, date, quantity, targetCpValue }) => (
             <tr key={formulationId}>
               <td>{formulationId}</td>
@@ -149,10 +148,11 @@ const FormulationList = () => {
               <td>{quantity || 'N/A'}</td>
               <td>{targetCpValue}</td>
               <td>
+                {/* Action buttons for each formulation */}
                 <ActionButtons
                   formulationId={formulationId}
                   date={date}
-                  openDeleteModal={setDeleteModalData} // Open delete modal with formulation data
+                  openDeleteModal={setDeleteModalData} // Open delete modal when clicked
                 />
               </td>
             </tr>
@@ -160,7 +160,7 @@ const FormulationList = () => {
         </tbody>
       </Table>
 
-      {/* Pagination controls to navigate through pages of formulations */}
+      {/* Pagination controls */}
       <Pagination>
         {Array.from({ length: totalPages }, (_, index) => (
           <Pagination.Item
@@ -175,17 +175,18 @@ const FormulationList = () => {
 
       {/* Delete confirmation modal */}
       <DeleteConfirmationModal
-        show={showDeleteModal} // Show or hide modal based on state
+        show={showDeleteModal} // Control modal visibility
         onHide={() => setShowDeleteModal(false)} // Hide modal on cancel
-        onDelete={handleDelete} // Handle deletion on confirm
+        onDelete={handleDelete} // Delete formulation on confirm
       />
     </motion.div>
   );
 };
 
+// Component for action buttons (view, edit, delete)
 const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   <>
-    {/* Action buttons for larger screens */}
+    {/* Buttons for larger screens */}
     <div className="d-none d-md-flex justify-content-start">
       <Link to={`/formulation/view/${formulationId}/${date}`}>
         <Button variant="primary" className="me-2 btn-sm">View</Button>
@@ -193,13 +194,13 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
       <Link to={`/formulation/edit/${formulationId}/${date}`}>
         <Button variant="warning" className="me-2 btn-sm">Edit</Button>
       </Link>
-      {/* Open delete modal on delete button click */}
+      {/* Delete button */}
       <Button variant="danger" className="me-2 btn-sm" onClick={() => openDeleteModal({ formulationId, date })}>
         Delete
       </Button>
     </div>
 
-    {/* Action dropdown for smaller screens */}
+    {/* Dropdown for smaller screens */}
     <div className="d-md-none">
       <Dropdown>
         <Dropdown.Toggle variant="secondary">Actions</Dropdown.Toggle>
@@ -219,19 +220,16 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   </>
 );
 
+// Component for delete confirmation modal
 const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   <Modal show={show} onHide={onHide}>
     <Modal.Header closeButton>
-      <Modal.Title>Confirm Deletion</Modal.Title>
+      <Modal.Title>Confirm Delete</Modal.Title>
     </Modal.Header>
     <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body>
     <Modal.Footer>
-      <Button variant="secondary" onClick={onHide}>
-        Cancel
-      </Button>
-      <Button variant="danger" onClick={onDelete}>
-        Delete
-      </Button>
+      <Button variant="secondary" onClick={onHide}>Cancel</Button>
+      <Button variant="danger" onClick={onDelete}>Delete</Button>
     </Modal.Footer>
   </Modal>
 );

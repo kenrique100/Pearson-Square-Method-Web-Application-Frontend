@@ -59,6 +59,7 @@ const CustomFeedFormulationList = () => {
     return formulations.filter(f => {
       const creationDate = new Date(f.date);
       
+      // Apply filtering logic based on the selected period
       switch (sortPeriod) {
         case '24hours':
           return now - creationDate <= 24 * 60 * 60 * 1000; // Last 24 hours
@@ -73,7 +74,7 @@ const CustomFeedFormulationList = () => {
         default:
           return true; // Show all formulations
       }
-    });
+    }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort formulations by creation date in ascending order
   };
 
   // Apply filtering and pagination
@@ -153,7 +154,7 @@ const CustomFeedFormulationList = () => {
         </tbody>
       </Table>
 
-      {/* Render pagination only if there are more than 7 formulations */}
+      {/* Render pagination only if there are more than itemsPerPage formulations */}
       {filteredFormulations.length > itemsPerPage && (
         <Pagination>
           {Array.from({ length: Math.ceil(filteredFormulations.length / itemsPerPage) }, (_, index) => (
@@ -174,6 +175,7 @@ const CustomFeedFormulationList = () => {
   );
 };
 
+// Component for action buttons
 const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   <>
     {/* Action buttons for larger screens (md and up) */}
@@ -203,14 +205,13 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   </>
 );
 
+// Modal for delete confirmation
 const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   <Modal show={show} onHide={onHide}>
     <Modal.Header closeButton>
-      <Modal.Title>Delete Formulation</Modal.Title>
+      <Modal.Title>Confirm Deletion</Modal.Title>
     </Modal.Header>
-    <Modal.Body>
-      Are you sure you want to delete this formulation?
-    </Modal.Body>
+    <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body>
     <Modal.Footer>
       <Button variant="secondary" onClick={onHide}>Cancel</Button>
       <Button variant="danger" onClick={onDelete}>Delete</Button>
