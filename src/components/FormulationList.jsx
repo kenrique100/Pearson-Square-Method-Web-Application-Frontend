@@ -1,77 +1,134 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Spinner, Modal, Dropdown, Pagination } from 'react-bootstrap';
+import { Table, Button, Spinner, Modal, Dropdown, Pagination, DropdownButton } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { FaFilter } from 'react-icons/fa'; // Import filter icon for filtering feature
 import api from '../services/api';
 import 'react-toastify/dist/ReactToastify.css';
 
 const FormulationList = () => {
-  // State to hold formulations and loading status
+  // State to store all formulations fetched from the API
   const [formulations, setFormulations] = useState([]);
+  // State to manage the loading state while fetching data
   const [loading, setLoading] = useState(true);
+  // State to store the data of the formulation being deleted
   const [deleteModalData, setDeleteModalData] = useState({ formulationId: null, date: null });
+  // State to manage the visibility of the delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
-  // State for pagination
+  // State to keep track of the current page in pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7; // Number of formulations displayed per page
+  // State to track the selected filter option (default is 'All')
+  const [filter, setFilter] = useState('All');
+  const itemsPerPage = 7; // Number of items to display per page in the table
 
-  // Fetch formulations from the API on component mount
+  // useEffect hook to fetch the formulations when the component is first mounted
   useEffect(() => {
     const fetchFormulations = async () => {
       try {
+        // Fetch all formulations from the API
         const { data } = await api.getFormulations();
-        setFormulations(data); // Store fetched formulations in state
+        // Set the formulations in descending order based on creation date
+        setFormulations(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
       } catch (error) {
         console.error('Error fetching formulations:', error);
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false); // Set loading to false once data is fetched
       }
     };
 
     fetchFormulations();
   }, []);
 
-  // Open the delete confirmation modal
-  const openDeleteModal = (formulationId, date) => {
-    setDeleteModalData({ formulationId, date });
-    setShowDeleteModal(true);
-  };
-
-  // Handle formulation deletion
+  // Function to handle the deletion of a formulation
   const handleDelete = async () => {
     const { formulationId, date } = deleteModalData;
     try {
-      await api.deleteFeedFormulationByIdAndDate(formulationId, date); // Call API to delete formulation
-      toast.success('Formulation deleted successfully!'); // Show success message
+      // Call API to delete the formulation based on its ID and date
+      await api.deleteFeedFormulationByIdAndDate(formulationId, date);
+      // Show success notification on successful deletion
+      toast.success('Formulation deleted successfully!');
+      // Remove the deleted formulation from the current state
       setFormulations(prevFormulations =>
-        prevFormulations.filter(f => f.formulationId !== formulationId) // Update state to remove deleted formulation
+        prevFormulations.filter(f => f.formulationId !== formulationId)
       );
     } catch (error) {
       console.error('Error deleting formulation:', error);
-      toast.error('Error deleting formulation'); // Show error message
+      toast.error('Error deleting formulation');
     } finally {
-      setShowDeleteModal(false); // Close the delete modal
+      // Hide the delete confirmation modal
+      setShowDeleteModal(false);
     }
   };
 
-  // Calculate pagination indices
-  const indexOfLastItem = currentPage * itemsPerPage; // Last item index
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage; // First item index
-  const currentFormulations = formulations.slice(indexOfFirstItem, indexOfLastItem); // Get current formulations for the page
+  // Function to filter formulations based on the selected date range from the dropdown
+  const filterFormulations = () => {
+    const now = new Date(); // Get current date
+    // Filter the formulations based on the selected filter
+    return formulations.filter(({ date }) => {
+      const formulationDate = new Date(date); // Convert the formulation date to Date object
+      const timeDiff = now - formulationDate; // Calculate time difference from the current date
 
-  const totalPages = Math.ceil(formulations.length / itemsPerPage); // Calculate total number of pages
+      // Determine which formulations to display based on the selected filter
+      switch (filter) {
+        case 'Last 24 Hours':
+          return timeDiff <= 24 * 60 * 60 * 1000; // Show formulations from the last 24 hours
+        case '1 Month':
+          return timeDiff <= 30 * 24 * 60 * 60 * 1000; // Show formulations from the last 1 month
+        case '2 Months':
+          return timeDiff <= 60 * 24 * 60 * 60 * 1000; // Show formulations from the last 2 months
+        case '6 Months':
+          return timeDiff <= 180 * 24 * 60 * 60 * 1000; // Show formulations from the last 6 months
+        case '1 Year':
+          return timeDiff <= 365 * 24 * 60 * 60 * 1000; // Show formulations from the last year
+        case 'All':
+        default:
+          return true; // Show all formulations
+      }
+    });
+  };
 
-  // Show spinner while loading
+  // Apply the filtering function to get the filtered list of formulations
+  const filteredFormulations = filterFormulations();
+  // Calculate the index of the last item on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  // Calculate the index of the first item on the current page
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  // Slice the filtered formulations to get only the items for the current page
+  const currentFormulations = filteredFormulations.slice(indexOfFirstItem, indexOfLastItem);
+  // Calculate the total number of pages for pagination
+  const totalPages = Math.ceil(filteredFormulations.length / itemsPerPage);
+
+  // Show a loading spinner while the data is being fetched
   if (loading) {
     return <Spinner animation="border" />;
   }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      <h2>Formulations List</h2>
-      <Table striped bordered hover>
+      {/* Filter Dropdown and heading */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Formulations List</h2>
+        {/* Dropdown button for filtering formulations by date range */}
+        <DropdownButton
+          id="filter-dropdown"
+          title={<><FaFilter /> Filter</>} // Display filter icon and label
+          variant="primary"
+          onSelect={setFilter} // Update filter state on selection
+          className="mb-2 mb-md-0"
+        >
+          {/* Filter options for various date ranges */}
+          <Dropdown.Item eventKey="Last 24 Hours">Last 24 Hours</Dropdown.Item>
+          <Dropdown.Item eventKey="1 Month">1 Month</Dropdown.Item>
+          <Dropdown.Item eventKey="2 Months">2 Months</Dropdown.Item>
+          <Dropdown.Item eventKey="6 Months">6 Months</Dropdown.Item>
+          <Dropdown.Item eventKey="1 Year">1 Year</Dropdown.Item>
+          <Dropdown.Item eventKey="All">All</Dropdown.Item>
+        </DropdownButton>
+      </div>
+
+      {/* Table to display the formulations */}
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
             <th>ID</th>
@@ -83,6 +140,7 @@ const FormulationList = () => {
           </tr>
         </thead>
         <tbody>
+          {/* Map through the current page of formulations and display in the table */}
           {currentFormulations.map(({ formulationId, formulationName, date, quantity, targetCpValue }) => (
             <tr key={formulationId}>
               <td>{formulationId}</td>
@@ -94,7 +152,7 @@ const FormulationList = () => {
                 <ActionButtons
                   formulationId={formulationId}
                   date={date}
-                  openDeleteModal={openDeleteModal}
+                  openDeleteModal={setDeleteModalData} // Open delete modal with formulation data
                 />
               </td>
             </tr>
@@ -102,47 +160,46 @@ const FormulationList = () => {
         </tbody>
       </Table>
 
-      {/* Pagination Controls */}
+      {/* Pagination controls to navigate through pages of formulations */}
       <Pagination>
         {Array.from({ length: totalPages }, (_, index) => (
           <Pagination.Item
             key={index + 1}
-            active={index + 1 === currentPage} // Highlight active page
-            onClick={() => setCurrentPage(index + 1)} // Set current page on click
+            active={index + 1 === currentPage}
+            onClick={() => setCurrentPage(index + 1)}
           >
             {index + 1}
           </Pagination.Item>
         ))}
       </Pagination>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete confirmation modal */}
       <DeleteConfirmationModal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        onDelete={handleDelete}
+        show={showDeleteModal} // Show or hide modal based on state
+        onHide={() => setShowDeleteModal(false)} // Hide modal on cancel
+        onDelete={handleDelete} // Handle deletion on confirm
       />
     </motion.div>
   );
 };
 
-// Component for action buttons
 const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   <>
+    {/* Action buttons for larger screens */}
     <div className="d-none d-md-flex justify-content-start">
-      {/* View formulation link */}
       <Link to={`/formulation/view/${formulationId}/${date}`}>
         <Button variant="primary" className="me-2 btn-sm">View</Button>
       </Link>
-      {/* Edit formulation link */}
       <Link to={`/formulation/edit/${formulationId}/${date}`}>
         <Button variant="warning" className="me-2 btn-sm">Edit</Button>
       </Link>
-      {/* Delete formulation button */}
-      <Button variant="danger" className="me-2 btn-sm" onClick={() => openDeleteModal(formulationId, date)}>
+      {/* Open delete modal on delete button click */}
+      <Button variant="danger" className="me-2 btn-sm" onClick={() => openDeleteModal({ formulationId, date })}>
         Delete
       </Button>
     </div>
 
+    {/* Action dropdown for smaller screens */}
     <div className="d-md-none">
       <Dropdown>
         <Dropdown.Toggle variant="secondary">Actions</Dropdown.Toggle>
@@ -153,7 +210,7 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
           <Dropdown.Item as={Link} to={`/formulation/edit/${formulationId}/${date}`}>
             Edit
           </Dropdown.Item>
-          <Dropdown.Item onClick={() => openDeleteModal(formulationId, date)}>
+          <Dropdown.Item onClick={() => openDeleteModal({ formulationId, date })}>
             Delete
           </Dropdown.Item>
         </Dropdown.Menu>
@@ -162,16 +219,19 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
   </>
 );
 
-// Delete confirmation modal component
 const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   <Modal show={show} onHide={onHide}>
     <Modal.Header closeButton>
-      <Modal.Title>Confirm Delete</Modal.Title>
+      <Modal.Title>Confirm Deletion</Modal.Title>
     </Modal.Header>
     <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body>
     <Modal.Footer>
-      <Button variant="secondary" onClick={onHide}>Cancel</Button>
-      <Button variant="danger" onClick={onDelete}>Delete</Button>
+      <Button variant="secondary" onClick={onHide}>
+        Cancel
+      </Button>
+      <Button variant="danger" onClick={onDelete}>
+        Delete
+      </Button>
     </Modal.Footer>
   </Modal>
 );
