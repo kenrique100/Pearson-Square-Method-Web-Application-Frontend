@@ -9,23 +9,27 @@ import * as api from '../services/api';
 const CustomFeedFormulationCreate = () => {
   const navigate = useNavigate();
 
+  // State to manage form data
   const [formData, setFormData] = useState({
     formulationName: '',
     proteins: [],
     carbohydrates: []
   });
 
+  // State to manage ingredient form fields and errors
   const [ingredientName, setIngredientName] = useState('');
   const [ingredientQuantity, setIngredientQuantity] = useState('');
   const [currentCategory, setCurrentCategory] = useState('proteins');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Predefined available ingredients for each category
   const availableIngredients = {
     proteins: ['Soya Beans', 'Groundnuts', 'Blood Meal', 'Fish Meal'],
     carbohydrates: ['Maize', 'Cassava'],
   };
 
+  // Handle change in form inputs
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -33,6 +37,7 @@ const CustomFeedFormulationCreate = () => {
     });
   };
 
+  // Add ingredient to the selected category
   const handleAddIngredient = () => {
     if (!ingredientName || !ingredientQuantity) {
       toast.error('Both name and quantity are required.');
@@ -41,15 +46,18 @@ const CustomFeedFormulationCreate = () => {
 
     const newIngredient = { name: ingredientName, quantityKg: parseFloat(ingredientQuantity) };
 
+    // Add the ingredient to the correct category (proteins or carbohydrates)
     setFormData((prevData) => ({
       ...prevData,
       [currentCategory]: [...prevData[currentCategory], newIngredient]
     }));
 
+    // Clear ingredient fields after adding
     setIngredientName('');
     setIngredientQuantity('');
   };
 
+  // Form validation before submission
   const validateForm = () => {
     const errs = {};
     if (!formData.formulationName.trim()) {
@@ -64,6 +72,7 @@ const CustomFeedFormulationCreate = () => {
     return errs;
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -75,10 +84,11 @@ const CustomFeedFormulationCreate = () => {
 
     setLoading(true);
     try {
+      // Make API call to create the custom feed formulation
       await api.createCustomFormulation(formData);
       toast.success('Formulation created successfully!');
       setTimeout(() => {
-        navigate('/custom/formulation/list');
+        navigate('/custom/formulation/list'); // Redirect to formulation list after success
       }, 2000);
     } catch (error) {
       toast.error('Failed to create formulation.');
