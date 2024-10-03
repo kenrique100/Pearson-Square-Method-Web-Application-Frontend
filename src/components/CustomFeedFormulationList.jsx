@@ -94,39 +94,61 @@ const CustomFeedFormulationList = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       
-      {/* Top Section with Title and Filter Button */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
+     {/* Top Section with Title and Filter Button */}
+     <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Custom Formulations List</h2>
 
         {/* Filter Icon and Dropdown */}
-        <Dropdown className="d-inline-block">
-          {/* Styled filter button */}
-          <Dropdown.Toggle
-            variant="primary"
-            className="d-flex align-items-center px-3 py-2"
-            style={{ borderRadius: '5px', backgroundColor: '#007bff', color: '#fff' }}  // Style the filter button
-          >
-            <FaFilter size={20} className="me-2" /> {/* Smaller filter icon */}
-            <span>Filter</span> {/* Filter text */}
-          </Dropdown.Toggle>
+        <div className="d-inline-block">
+          {/* Filter Button for medium and larger screens */}
+          <Dropdown className="d-none d-md-inline-block">
+            <Dropdown.Toggle
+              variant="primary"
+              className="d-flex align-items-center px-3 py-2"
+              style={{ borderRadius: '5px', backgroundColor: '#007bff', color: '#fff' }} // Style the filter button
+            >
+              <FaFilter size={20} className="me-2" /> {/* Filter icon */}
+              <span>Filter</span> {/* Filter text */}
+            </Dropdown.Toggle>
 
-          {/* Dropdown for filter options */}
-          <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortPeriod('24hours')}>Last 24 Hours</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortPeriod('1month')}>Last 1 Month</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortPeriod('2months')}>Last 2 Months</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortPeriod('6months')}>Last 6 Months</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortPeriod('1year')}>Last 1 Year</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortPeriod('all')}>All</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </div>
+            {/* Dropdown for filter options */}
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => setSortPeriod('24hours')}>Last 24 Hours</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('1month')}>Last 1 Month</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('2months')}>Last 2 Months</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('6months')}>Last 6 Months</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('1year')}>Last 1 Year</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('all')}>All</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
 
+          {/* Filter Icon only for small screens */}
+          <Dropdown className="d-md-none">
+            <Dropdown.Toggle
+              variant="primary"
+              className="px-2 py-2"
+              style={{ borderRadius: '5px', backgroundColor: '#007bff', color: '#fff' }}
+            >
+              <FaFilter size={20} /> {/* Only filter icon */}
+            </Dropdown.Toggle>
+
+            {/* Dropdown for filter options */}
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => setSortPeriod('24hours')}>Last 24 Hours</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('1month')}>Last 1 Month</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('2months')}>Last 2 Months</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('6months')}>Last 6 Months</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('1year')}>Last 1 Year</Dropdown.Item>
+              <Dropdown.Item onClick={() => setSortPeriod('all')}>All</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+        </div>
       {/* Table displaying formulations */}
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>ID</th>
+            {/* <th>ID</th> -- Removed ID column */}
             <th>Formulation Name</th>
             <th>Creation Date</th>
             <th>Quantity (kg)</th>
@@ -137,7 +159,7 @@ const CustomFeedFormulationList = () => {
         <tbody>
           {currentFormulations.map(({ formulationId, formulationName, date, totalQuantityKg, targetCpValue }) => (
             <tr key={formulationId}>
-              <td>{formulationId}</td>
+              {/* <td>{formulationId}</td> -- Removed ID cell */}
               <td>{formulationName}</td>
               <td>{new Date(date).toLocaleDateString()}</td>
               <td>{totalQuantityKg || 'N/A'}</td>
@@ -209,7 +231,7 @@ const ActionButtons = ({ formulationId, date, openDeleteModal }) => (
 const DeleteConfirmationModal = ({ show, onHide, onDelete }) => (
   <Modal show={show} onHide={onHide}>
     <Modal.Header closeButton>
-      <Modal.Title>Confirm Deletion</Modal.Title>
+      <Modal.Title>Confirm Delete</Modal.Title>
     </Modal.Header>
     <Modal.Body>Are you sure you want to delete this formulation?</Modal.Body>
     <Modal.Footer>
