@@ -7,7 +7,7 @@ const NavbarComponent = () => {
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
         <LinkContainer to="/">
-          <Navbar.Brand>Feed Formulation</Navbar.Brand>
+          <Navbar.Brand>Fish Feed Formulation Calculator</Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
